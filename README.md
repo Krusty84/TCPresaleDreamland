@@ -22,8 +22,7 @@ It's a lightweight, one-click demo data generator tailored for **Presales Engine
 
 * Presale folks who hear *"Can you show this use case?"* 3 minutes before the call
 * Consultants tired of building fake data by hand
-* Anyone brave enough to sell Teamcenter without touching the real backend
-
+  
 --
 
 ## ⚠️ Disclaimer
