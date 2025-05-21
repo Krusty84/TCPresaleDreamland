@@ -1,0 +1,7 @@
+1. Add packages:
+https://github.com/Krusty84/ElegantTabs
+https://github.com/sindresorhus/LaunchAtLogin-Modern
+
+*LoggerHelper if you need it: https://github.com/Krusty84/LoggerHelper
+
+2. Check Sandbox Mode (it should be enabled)
