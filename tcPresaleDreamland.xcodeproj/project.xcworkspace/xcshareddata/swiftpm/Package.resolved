@@ -1,0 +1,24 @@
+{
+  "originHash" : "ecf735beec35f6aa5cfb62f0188b26104635ca7c159307cf6a53196281409cee",
+  "pins" : [
+    {
+      "identity" : "eleganttabs",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/Krusty84/ElegantTabs.git",
+      "state" : {
+        "revision" : "8705091e669688fbb29c1130875f7390d382c4b8",
+        "version" : "1.0.0"
+      }
+    },
+    {
+      "identity" : "loggerhelper",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/Krusty84/LoggerHelper",
+      "state" : {
+        "revision" : "d65238199e06a607c5db962787e626a92b9990e7",
+        "version" : "1.0.0"
+      }
+    }
+  ],
+  "version" : 3
+}

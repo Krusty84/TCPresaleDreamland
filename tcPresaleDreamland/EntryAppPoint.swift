@@ -7,13 +7,14 @@
 
 import SwiftUI
 import AppKit
+import LoggerHelper
 
 @main
 
 struct EntryPointApp: App {
     init() {
         Helpers.checkInternetConnection {
-                print("Connected to WAN")
+            LoggerHelper.info("Connected to WAN")
         }
     }
     var body: some Scene {

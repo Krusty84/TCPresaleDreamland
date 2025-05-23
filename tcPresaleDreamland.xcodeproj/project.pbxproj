@@ -6,6 +6,11 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		3DA8840F2DDE5D8500C0C8CA /* ElegantTabs in Frameworks */ = {isa = PBXBuildFile; productRef = 3DA8840E2DDE5D8500C0C8CA /* ElegantTabs */; };
+		3DA884122DDE5DA300C0C8CA /* LoggerHelper in Frameworks */ = {isa = PBXBuildFile; productRef = 3DA884112DDE5DA300C0C8CA /* LoggerHelper */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		3DA883CF2DDE5D3900C0C8CA /* tcPresaleDreamland.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = tcPresaleDreamland.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -23,6 +28,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				3DA884122DDE5DA300C0C8CA /* LoggerHelper in Frameworks */,
+				3DA8840F2DDE5D8500C0C8CA /* ElegantTabs in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -65,6 +72,8 @@
 			);
 			name = tcPresaleDreamland;
 			packageProductDependencies = (
+				3DA8840E2DDE5D8500C0C8CA /* ElegantTabs */,
+				3DA884112DDE5DA300C0C8CA /* LoggerHelper */,
 			);
 			productName = tcPresaleDreamland;
 			productReference = 3DA883CF2DDE5D3900C0C8CA /* tcPresaleDreamland.app */;
@@ -94,6 +103,10 @@
 			);
 			mainGroup = 3DA883C62DDE5D3900C0C8CA;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				3DA8840D2DDE5D8500C0C8CA /* XCRemoteSwiftPackageReference "ElegantTabs" */,
+				3DA884102DDE5DA300C0C8CA /* XCRemoteSwiftPackageReference "LoggerHelper" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 3DA883D02DDE5D3900C0C8CA /* Products */;
 			projectDirPath = "";
@@ -311,6 +324,38 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		3DA8840D2DDE5D8500C0C8CA /* XCRemoteSwiftPackageReference "ElegantTabs" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/Krusty84/ElegantTabs.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.0.0;
+			};
+		};
+		3DA884102DDE5DA300C0C8CA /* XCRemoteSwiftPackageReference "LoggerHelper" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/Krusty84/LoggerHelper";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.0.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		3DA8840E2DDE5D8500C0C8CA /* ElegantTabs */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 3DA8840D2DDE5D8500C0C8CA /* XCRemoteSwiftPackageReference "ElegantTabs" */;
+			productName = ElegantTabs;
+		};
+		3DA884112DDE5DA300C0C8CA /* LoggerHelper */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 3DA884102DDE5DA300C0C8CA /* XCRemoteSwiftPackageReference "LoggerHelper" */;
+			productName = LoggerHelper;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 3DA883C72DDE5D3900C0C8CA /* Project object */;
 }

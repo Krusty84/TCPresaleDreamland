@@ -7,7 +7,7 @@
 
 import Foundation
 
-class TabOneViewModel: ObservableObject {
+class BomGeneratorViewModel: ObservableObject {
     @Published var title: String = "Hello, SwiftUI!"
 
     func changeTitle() {

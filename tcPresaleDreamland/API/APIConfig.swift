@@ -8,7 +8,7 @@
 import Foundation
 
 struct APIConfig {
-    static let yaFoldersEndpoint = "https://resource-manager.api.cloud.yandex.net/resource-manager/v1/folders"
+    static let deepSeekChaCcompletions = "https://api.deepseek.com/v1/chat/completions"
     //
     static let yaFoldersWebUrl = "https://console.yandex.cloud/folders/"
     static func yaVMsWebUrl(folderID: String, instanceID: String) -> String {

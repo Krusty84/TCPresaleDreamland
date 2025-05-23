@@ -7,8 +7,8 @@
 
 import SwiftUI
 
-struct TabOneContent: View {
-    @StateObject private var viewModel = TabOneViewModel()
+struct BomGeneratorContent: View {
+    @StateObject private var viewModel = BomGeneratorViewModel()
 
     var body: some View {
         VStack(spacing: 16) {
@@ -24,9 +24,9 @@ struct TabOneContent: View {
 }
 
 #if DEBUG
-struct TabOneContent_Previews: PreviewProvider {
+struct BomGeneratorContent_Previews: PreviewProvider {
     static var previews: some View {
-        TabOneContent()
+        BomGeneratorContent()
     }
 }
 #endif
