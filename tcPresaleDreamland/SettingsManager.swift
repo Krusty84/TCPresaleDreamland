@@ -22,7 +22,23 @@ class SettingsManager {
     private let tcPasswordKey = "com.krusty84.settings.tcPassword"
 
     // Default prompts
-    let defaultBOMPrompt = "Generate a bill of materials for the given product description."
+    let defaultBOMPrompt = """
+    Generate a Bill of Materials (BOM) for the specified product: [PRODUCT_NAME]. Return the BOM as a JSON object with the following structure: 
+    {
+      "product": "[PRODUCT_NAME]",
+      "components": [
+        {
+          "part_name": string,
+          "part_number": string,
+          "quantity": number,
+          "material": string,
+          "description": string,
+          "supplier": string (optional)
+        }
+      ]
+    }
+    Ensure all components necessary for the assembly of [PRODUCT_NAME] are listed comprehensively.
+    """
     let defaultReqSpecPrompt = "Generate a requirements specification based on the product details."
     let defaultItemsPrompt = "Generate item entries from the provided list."
 

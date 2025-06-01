@@ -8,11 +8,13 @@
 import Foundation
 
 struct APIConfig {
-    static let deepSeekChaCcompletions = "https://api.deepseek.com/v1/chat/completions"
-    //
-    static let yaFoldersWebUrl = "https://console.yandex.cloud/folders/"
-    static func yaVMsWebUrl(folderID: String, instanceID: String) -> String {
-          return "\(yaFoldersWebUrl)\(folderID)/compute/instance/\(instanceID)/overview"
+    private let settings = SettingsManager.shared
+    static let deepSeekChatCcompletions = "https://api.deepseek.com/v1/chat/completions"
+    static func tcLoginUrl(tcUrl: String) -> String {
+        return "\(tcUrl)/JsonRestServices/Core-2011-06-Session/login"
+    }
+    static func tcSessionInfoUrl(tcUrl: String) -> String {
+        return "\(tcUrl)/JsonRestServices/Core-2007-01-Session/getTCSessionInfo"
     }
 }
 

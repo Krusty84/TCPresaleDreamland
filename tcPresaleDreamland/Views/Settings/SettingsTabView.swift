@@ -13,6 +13,7 @@ struct SettingsTabContent: View {
     @State private var selectedTab: Int = 0
     private let apiService = DeepSeekAPIService()
     @StateObject private var vm = SettingsTabViewModel()
+    
     var body: some View {
         VStack(spacing: 0) {
             Picker("", selection: $selectedTab) {
@@ -111,28 +112,36 @@ struct SettingsTabContent: View {
                             .textFieldStyle(RoundedBorderTextFieldStyle())
                         TextField("AWC URL", text: $vm.awcURL)
                             .textFieldStyle(RoundedBorderTextFieldStyle())
-                        TextField("Username", text: $vm.tcUsername)
-                            .textFieldStyle(RoundedBorderTextFieldStyle())
-                        SecureField("Password", text: $vm.tcPassword)
-                            .textFieldStyle(RoundedBorderTextFieldStyle())
+
+                        // All in one line: Username, Password, Status, Verify Button
+                        HStack(spacing: 10) {
+                            TextField("Username", text: $vm.tcUsername)
+                                .textFieldStyle(RoundedBorderTextFieldStyle())
+                                .frame(minWidth: 120)
+
+                            SecureField("Password", text: $vm.tcPassword)
+                                .textFieldStyle(RoundedBorderTextFieldStyle())
+                                .frame(minWidth: 120)
+
+                            tcStatusIndicator
+
+                            Button("Verify", action: vm.verifyTCConnect)
+                                .frame(minWidth: 60)
+
+                            Spacer()
+                        }
                     }
                     .padding(.horizontal, 8)
                 } header: {
                     SectionHeader(title: "Teamcenter Settings", systemImage: "server.rack")
                 }
-
-                HStack {
-                    Spacer()
-                    Button("Verify", action: vm.verifyTCConnect)
-                }
-                .padding()
             }
             .padding(20)
         }
     }
     
-    
     // MARK: – Helpers
+
     private struct SectionHeader: View {
         let title: String
         let systemImage: String
@@ -146,6 +155,7 @@ struct SettingsTabContent: View {
         }
     }
     
+    // Existing API Key status view
     private var apiKeyStatusIndicator: some View {
         VStack(alignment: .leading, spacing: 4) {
             if vm.isLoading {
@@ -159,9 +169,10 @@ struct SettingsTabContent: View {
             }
             else if let code = vm.responseCode {
                 HStack(spacing: 4) {
-                    Image(systemName: (200...299).contains(code) || code == 400 ? "checkmark.circle.fill" : "xmark.circle.fill")
+                    Image(systemName: (200...299).contains(code) || code == 400
+                                ? "checkmark.circle.fill"
+                                : "xmark.circle.fill")
                         .foregroundColor((200...299).contains(code) || code == 400 ? .green : .red)
-                    
                     Text(statusMessage(for: code))
                         .font(.caption)
                         .foregroundColor((200...299).contains(code) || code == 400 ? .green : .red)
@@ -179,6 +190,41 @@ struct SettingsTabContent: View {
         }
     }
 
+    // New TC Connect status view
+    private var tcStatusIndicator: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            if vm.isLoading {
+                HStack(spacing: 4) {
+                    ProgressView()
+                        .controlSize(.small)
+                    Text("Connecting...")
+                        .font(.caption)
+                        .foregroundColor(.gray)
+                }
+            }
+            else if let code = vm.tcResponseCode {
+                HStack(spacing: 4) {
+                    Image(systemName: (200...299).contains(code)
+                                ? "checkmark.circle.fill"
+                                : "xmark.circle.fill")
+                        .foregroundColor((200...299).contains(code) ? .green : .red)
+                    Text(tcStatusMessage(for: code))
+                        .font(.caption)
+                        .foregroundColor((200...299).contains(code) ? .green : .red)
+                }
+            }
+            else if let error = vm.tcErrorMessage {
+                HStack(spacing: 4) {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .foregroundColor(.orange)
+                    Text(error)
+                        .font(.caption)
+                        .foregroundColor(.orange)
+                }
+            }
+        }
+    }
+    
     private func statusMessage(for code: Int) -> String {
         switch code {
         case 200...299: return "Valid API Key"
@@ -190,8 +236,17 @@ struct SettingsTabContent: View {
         default: return "Error (\(code))"
         }
     }
+    
+    private func tcStatusMessage(for code: Int) -> String {
+        switch code {
+        case 200...299: return "Connected"
+        case 401: return "Invalid Credentials"
+        case 403: return "Forbidden"
+        case 500...599: return "Server Error"
+        default: return "Error (\(code))"
+        }
+    }
 }
-
 
 #if DEBUG
 struct SettingsTabContent_Previews: PreviewProvider {
@@ -200,4 +255,5 @@ struct SettingsTabContent_Previews: PreviewProvider {
     }
 }
 #endif
+
 

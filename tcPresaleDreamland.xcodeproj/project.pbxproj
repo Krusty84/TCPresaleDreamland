@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		3D7984672DEC96D300039576 /* LaunchAtLogin in Frameworks */ = {isa = PBXBuildFile; productRef = 3D7984662DEC96D300039576 /* LaunchAtLogin */; };
 		3DA8840F2DDE5D8500C0C8CA /* ElegantTabs in Frameworks */ = {isa = PBXBuildFile; productRef = 3DA8840E2DDE5D8500C0C8CA /* ElegantTabs */; };
 		3DA884122DDE5DA300C0C8CA /* LoggerHelper in Frameworks */ = {isa = PBXBuildFile; productRef = 3DA884112DDE5DA300C0C8CA /* LoggerHelper */; };
 /* End PBXBuildFile section */
@@ -28,6 +29,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				3D7984672DEC96D300039576 /* LaunchAtLogin in Frameworks */,
 				3DA884122DDE5DA300C0C8CA /* LoggerHelper in Frameworks */,
 				3DA8840F2DDE5D8500C0C8CA /* ElegantTabs in Frameworks */,
 			);
@@ -74,6 +76,7 @@
 			packageProductDependencies = (
 				3DA8840E2DDE5D8500C0C8CA /* ElegantTabs */,
 				3DA884112DDE5DA300C0C8CA /* LoggerHelper */,
+				3D7984662DEC96D300039576 /* LaunchAtLogin */,
 			);
 			productName = tcPresaleDreamland;
 			productReference = 3DA883CF2DDE5D3900C0C8CA /* tcPresaleDreamland.app */;
@@ -106,6 +109,7 @@
 			packageReferences = (
 				3DA8840D2DDE5D8500C0C8CA /* XCRemoteSwiftPackageReference "ElegantTabs" */,
 				3DA884102DDE5DA300C0C8CA /* XCRemoteSwiftPackageReference "LoggerHelper" */,
+				3D7984652DEC96D300039576 /* XCRemoteSwiftPackageReference "LaunchAtLogin-Modern" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 3DA883D02DDE5D3900C0C8CA /* Products */;
@@ -261,12 +265,14 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CODE_SIGN_ENTITLEMENTS = tcPresaleDreamland/tcPresaleDreamland.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_FILE = tcPresaleDreamland/Info.plist;
+				INFOPLIST_KEY_LSApplicationCategoryType = "";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -284,12 +290,14 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CODE_SIGN_ENTITLEMENTS = tcPresaleDreamland/tcPresaleDreamland.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_FILE = tcPresaleDreamland/Info.plist;
+				INFOPLIST_KEY_LSApplicationCategoryType = "";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -326,6 +334,14 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		3D7984652DEC96D300039576 /* XCRemoteSwiftPackageReference "LaunchAtLogin-Modern" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/sindresorhus/LaunchAtLogin-Modern";
+			requirement = {
+				branch = main;
+				kind = branch;
+			};
+		};
 		3DA8840D2DDE5D8500C0C8CA /* XCRemoteSwiftPackageReference "ElegantTabs" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/Krusty84/ElegantTabs.git";
@@ -345,6 +361,11 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		3D7984662DEC96D300039576 /* LaunchAtLogin */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 3D7984652DEC96D300039576 /* XCRemoteSwiftPackageReference "LaunchAtLogin-Modern" */;
+			productName = LaunchAtLogin;
+		};
 		3DA8840E2DDE5D8500C0C8CA /* ElegantTabs */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 3DA8840D2DDE5D8500C0C8CA /* XCRemoteSwiftPackageReference "ElegantTabs" */;

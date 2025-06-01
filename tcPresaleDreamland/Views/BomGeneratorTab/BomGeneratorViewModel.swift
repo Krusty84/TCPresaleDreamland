@@ -8,9 +8,55 @@
 import Foundation
 
 class BomGeneratorViewModel: ObservableObject {
-    @Published var title: String = "Hello, SwiftUI!"
-
-    func changeTitle() {
-        title = "Title changed!"
+    private let tcApi = TeamcenterAPIService.shared
+    @Published var productName: String = ""
+    @Published var bomData: BOMData?
+    @Published var isLoading: Bool = false
+    
+    func generateBOM() async {
+        isLoading = true
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+            self.bomData = BOMData(
+                product: self.productName,
+                components: [
+                    Component(
+                        name: "Processor",
+                        quantity: 1,
+                        subComponents: [
+                            SubComponent(name: "Silicon Wafer", quantity: 1),
+                            SubComponent(name: "Thermal Paste", quantity: 0.01)
+                        ]
+                    ),
+                    Component(
+                        name: "Memory",
+                        quantity: 2,
+                        subComponents: [
+                            SubComponent(name: "DRAM Chip", quantity: 8),
+                            SubComponent(name: "PCB", quantity: 1)
+                        ]
+                    )
+                ]
+            )
+            self.isLoading = false
+        }
+        await tcApi.getTcSessionInfo(tcEndpointUrl: APIConfig.tcLoginUrl(tcUrl: SettingsManager.shared.tcURL))
     }
+}
+
+struct BOMData: Codable {
+    let product: String
+    let components: [Component]
+}
+
+struct Component: Codable, Identifiable {
+    let id = UUID()
+    let name: String
+    let quantity: Int
+    let subComponents: [SubComponent]?
+}
+
+struct SubComponent: Codable, Identifiable {
+    let id = UUID()
+    let name: String
+    let quantity: Double
 }

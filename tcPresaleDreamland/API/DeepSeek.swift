@@ -12,4 +12,5 @@ enum APIError: Error {
     case invalidResponse
     case unauthorized
     case httpError(statusCode: Int)
+    case invalidJSON
 }
