@@ -183,6 +183,27 @@ class SettingsTabViewModel: ObservableObject {
                         }
                     }
                     
+                    if let folderArray = await tcApi.expandFolder(tcUrl: tcURL,
+                                                             folderUid: self.tcUserHomeFolderUid,
+                                                             expItemRev: false, latestNRevs: -1, info: [], contentTypesFilter: [],
+                                                    propertyAttributes:["object_name", "object_desc", "creation_date"])
+                    {
+                            // 3) Now `folderArray` is [[String: Any]]
+                            //    You can loop over it or store it:
+                            for folderDict in folderArray {
+                                // Each folderDict has keys: "uid", "className", "type", plus your attribute names
+                                if let uid = folderDict["uid"] as? String,
+                                   let name = folderDict["object_name"] as? String {
+                                    print("Folder UID = \(uid), name = \(name)")
+                                }
+                            }
+
+                            // 4) You can also save folderArray to a property if you want:
+                            //self.myFolders = folderArray
+                        } else {
+                            print("expandFolder returned nil or failed")
+                        }
+                   
                    
                 } else {
                     // tcLogin returned nil → login failure

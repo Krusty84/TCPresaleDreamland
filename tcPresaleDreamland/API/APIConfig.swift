@@ -19,6 +19,10 @@ struct APIConfig {
     static func tcGetPropertiesUrl(tcUrl: String) -> String {
         return "\(tcUrl)/JsonRestServices/Core-2006-03-DataManagement/getProperties"
     }
+    
+    static func tcExpandFolder(tcUrl: String) -> String {
+        return "\(tcUrl)/JsonRestServices/Cad-2008-06-DataManagement/expandFoldersForCAD"
+    }
 }
 
 // MARK: - Dummy service for authentication example

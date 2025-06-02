@@ -66,6 +66,34 @@ class TCHelpers: ObservableObject {
 
             return firstHomeUID
         }
+    
+     func parsePropertiesResponse(_ rawJson: [String: Any]) -> [String: String]? {
+         print("RAW: ", rawJson)
+         var result: [String: String] = [:]
+
+         // Navigate to "modelObjects" dictionary
+         guard
+             let modelObjects = rawJson["modelObjects"] as? [String: Any],
+             let firstEntry = modelObjects.values.first as? [String: Any],
+             let props = firstEntry["props"] as? [String: Any]
+         else {
+             return nil
+         }
+
+         // Iterate over each property in "props"
+         for (propName, propValue) in props {
+             guard
+                 let propDict = propValue as? [String: Any],
+                 let uiValues = propDict["uiValues"] as? [Any],
+                 let firstUI = uiValues.first as? String
+             else {
+                 continue
+             }
+             result[propName] = firstUI
+         }
+
+         return result
+     }
 }
 
 
