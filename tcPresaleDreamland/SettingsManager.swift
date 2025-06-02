@@ -20,6 +20,8 @@ class SettingsManager {
     private let awcURLKey = "com.krusty84.settings.awcURL"
     private let tcUsernameKey = "com.krusty84.settings.tcUsername"
     private let tcPasswordKey = "com.krusty84.settings.tcPassword"
+    private let tcUserUidKey = "com.krusty84.settings.tcUserUid"
+    private let tcUserHomeFolderUidKey = "com.krusty84.settings.tcUserHomeFolderUid"
 
     // Default prompts
     let defaultBOMPrompt = """
@@ -85,5 +87,15 @@ class SettingsManager {
     var tcPassword: String {
         get { defaults.string(forKey: tcPasswordKey) ?? "" }
         set { defaults.set(newValue, forKey: tcPasswordKey) }
+    }
+    
+    var tcUserUid: String {
+        get { defaults.string(forKey: tcUserUidKey) ?? "" }
+        set { defaults.set(newValue, forKey: tcUserUidKey) }
+    }
+    
+    var tcUserHomeFolderUid: String {
+        get { defaults.string(forKey: tcUserHomeFolderUidKey) ?? "" }
+        set { defaults.set(newValue, forKey: tcUserHomeFolderUidKey) }
     }
 }

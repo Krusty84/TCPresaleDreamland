@@ -13,7 +13,7 @@ class BomGeneratorViewModel: ObservableObject {
     @Published var bomData: BOMData?
     @Published var isLoading: Bool = false
     
-    func generateBOM() async {
+    func generateBOM()  {
         isLoading = true
         DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
             self.bomData = BOMData(
@@ -39,7 +39,6 @@ class BomGeneratorViewModel: ObservableObject {
             )
             self.isLoading = false
         }
-        await tcApi.getTcSessionInfo(tcEndpointUrl: APIConfig.tcLoginUrl(tcUrl: SettingsManager.shared.tcURL))
     }
 }
 

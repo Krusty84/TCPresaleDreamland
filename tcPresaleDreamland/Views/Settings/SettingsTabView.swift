@@ -129,6 +129,15 @@ struct SettingsTabContent: View {
                                 .frame(minWidth: 60)
 
                             Spacer()
+                            
+                            
+                            TextField("userUID", text: $vm.tcUserUid)
+                                .textFieldStyle(RoundedBorderTextFieldStyle())
+                                .frame(minWidth: 120)
+                            TextField("homeFolder", text: $vm.tcUserHomeFolderUid)
+                                .textFieldStyle(RoundedBorderTextFieldStyle())
+                                .frame(minWidth: 120)
+                            
                         }
                     }
                     .padding(.horizontal, 8)

@@ -12,6 +12,7 @@ import LoggerHelper
 class SettingsTabViewModel: ObservableObject {
     private let deepSeekApi = DeepSeekAPIService.shared
     private let tcApi = TeamcenterAPIService.shared
+    private let tcHelpers = TCHelpers.shared
     @Published var apiKeyValid: Bool = false
     @Published var isLoading: Bool = false
     @Published var responseCode: Int?            // for DeepSeek verify
@@ -34,9 +35,11 @@ class SettingsTabViewModel: ObservableObject {
     @Published var bomPrompt: String {
         didSet { SettingsManager.shared.bomPrompt = bomPrompt }
     }
+    
     @Published var reqSpecPrompt: String {
         didSet { SettingsManager.shared.reqSpecPrompt = reqSpecPrompt }
     }
+    
     @Published var itemsPrompt: String {
         didSet { SettingsManager.shared.itemsPrompt = itemsPrompt }
     }
@@ -44,14 +47,24 @@ class SettingsTabViewModel: ObservableObject {
     @Published var tcURL: String {
         didSet { SettingsManager.shared.tcURL = tcURL }
     }
+    
     @Published var awcURL: String {
         didSet { SettingsManager.shared.awcURL = awcURL }
     }
+    
     @Published var tcUsername: String {
         didSet { SettingsManager.shared.tcUsername = tcUsername }
     }
     @Published var tcPassword: String {
         didSet { SettingsManager.shared.tcPassword = tcPassword }
+    }
+    
+    @Published var tcUserUid: String {
+        didSet { SettingsManager.shared.tcUserUid = tcUserUid }
+    }
+    
+    @Published var tcUserHomeFolderUid: String {
+        didSet { SettingsManager.shared.tcUserHomeFolderUid = tcUserHomeFolderUid }
     }
     
     init() {
@@ -65,6 +78,8 @@ class SettingsTabViewModel: ObservableObject {
         self.awcURL = mgr.awcURL
         self.tcUsername = mgr.tcUsername
         self.tcPassword = mgr.tcPassword
+        self.tcUserUid = mgr.tcUserUid
+        self.tcUserHomeFolderUid = mgr.tcUserHomeFolderUid
     }
     
     func verifyAPIKey() {
@@ -118,47 +133,81 @@ class SettingsTabViewModel: ObservableObject {
     
     /// Calls TeamcenterAPIService.login(...) with the saved tcUsername / tcPassword.
     /// Updates `tcSessionId` (on success) or `tcErrorMessage` (on failure).
+    
     func verifyTCConnect() {
-        // Reset any previous TC-related state:
+        // Clear any old state
         tcSessionId = nil
         tcResponseCode = nil
         tcErrorMessage = nil
         isLoading = true
         
         Task {
-            // Make sure SettingsManager.shared.tcURL is up to date
-            // (TeamcenterAPIService.login reads Settings.tcURL internally).
-            // You might want to re-assign it here if you let users edit it in the UI.
-            
             do {
-                // Call existing login(...) method:
-                let sessionId = await tcApi.tcLogin(tcEndpointUrl: APIConfig.tcLoginUrl(tcUrl: tcURL),userName: tcUsername,userPassword: tcPassword
+                let sessionId = await tcApi.tcLogin(
+                    tcEndpointUrl: APIConfig.tcLoginUrl(tcUrl: tcURL),
+                    userName: tcUsername,
+                    userPassword: tcPassword
                 )
-                DispatchQueue.main.async {
-                    self.isLoading = false
-                    if let validSession = sessionId {
-                        // login succeeded
+                
+                if let validSession = sessionId {
+                    self.tcSessionId = validSession
+                    
+                    let rawSessionInfo = await tcApi.getTcSessionInfo(tcEndpointUrl: APIConfig.tcSessionInfoUrl(tcUrl: tcURL))
+                    DispatchQueue.main.async { [self] in
+                        self.isLoading = false
                         self.tcSessionId = validSession
                         self.tcResponseCode = 200
-                        LoggerHelper.info("TC login succeeded. JSESSIONID: \(validSession)")
-                    } else {
-                        // login returned nil → treat as failure
+                        
+                        if let json = rawSessionInfo {
+                            self.tcUserUid = tcHelpers.getUserUID(from: json)
+                        } else {
+                            // getSessionInfo failed
+                            self.tcErrorMessage = "Could not fetch raw session info"
+                            LoggerHelper.error("getSessionInfo returned nil")
+                        }
+                    }
+                    
+                    let rawUserHomeFolderUid=await tcApi.getUserHomeFolder(tcEndpointUrl: APIConfig.tcGetPropertiesUrl(tcUrl: tcURL), userUid: self.tcUserUid)
+                    DispatchQueue.main.async { [self] in
+                        self.isLoading = false
+                        self.tcSessionId = validSession
+                        self.tcResponseCode = 200
+                        
+                        if let json = rawUserHomeFolderUid {
+                            self.tcUserHomeFolderUid=tcHelpers.getHomeUserFolderUid(from: json)
+                    
+                        } else {
+                            // getHomeFolderUid failed
+                            self.tcErrorMessage = "Could not fetch raw homefolder info"
+                            LoggerHelper.error("getUserHomeFolder returned nil")
+                        }
+                    }
+                    
+                   
+                } else {
+                    // tcLogin returned nil → login failure
+                    DispatchQueue.main.async {
+                        self.isLoading = false
                         self.tcResponseCode = 401
                         self.tcErrorMessage = "Teamcenter login failed"
-                        LoggerHelper.error("Teamcenter login failed. No JSESSIONID returned.")
+                        LoggerHelper.error("TC login failed; no JSESSIONID returned.")
                     }
                 }
             } catch {
-                // In case login(...) ever throws (it currently returns nil on failure, but handle defensively)
+                // This shouldn’t normally run, since our async methods return nil rather than throw,
+                // but we handle it defensively anyway.
                 DispatchQueue.main.async {
                     self.isLoading = false
                     self.tcSessionId = nil
                     self.tcResponseCode = nil
                     self.tcErrorMessage = error.localizedDescription
-                    LoggerHelper.error("Error during TC login: \(error.localizedDescription)")
+                    LoggerHelper.error("Error during TC connect: \(error.localizedDescription)")
                 }
             }
         }
+        
+    
+
     }
 }
 

@@ -16,6 +16,9 @@ struct APIConfig {
     static func tcSessionInfoUrl(tcUrl: String) -> String {
         return "\(tcUrl)/JsonRestServices/Core-2007-01-Session/getTCSessionInfo"
     }
+    static func tcGetPropertiesUrl(tcUrl: String) -> String {
+        return "\(tcUrl)/JsonRestServices/Core-2006-03-DataManagement/getProperties"
+    }
 }
 
 // MARK: - Dummy service for authentication example
