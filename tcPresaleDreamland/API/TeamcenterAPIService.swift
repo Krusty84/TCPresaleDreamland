@@ -134,75 +134,7 @@ class TeamcenterAPIService: ObservableObject {
                 return nil
             }
         }
-    
-//    func getTcSessionInfo(tcEndpointUrl: String) async -> [String: Any]? {
-//        // 1. Make sure we have a JSESSIONID from a prior login
-//        guard let session = self.jsessionId else {
-//            print("No JSESSIONID found. Please login first.")
-//            return nil
-//        }
-//        
-//        guard let url = URL(string: "\(tcEndpointUrl)") else {
-//            print("Invalid URL string: \(tcEndpointUrl)")
-//            return nil
-//        }
-//        
-//        
-//        // 3. Prepare payload with only header (empty state & policy)
-//        let payload: [String: Any] = [
-//            "header": [
-//                "state": [:],
-//                "policy": [:]
-//            ]
-//        ]
-//        
-//        // 4. Serialize that minimal payload
-//        let jsonData: Data
-//        do {
-//            jsonData = try JSONSerialization.data(withJSONObject: payload, options: [])
-//        } catch {
-//            print("Failed to serialize JSON payload for session info:", error)
-//            return nil
-//        }
-//        
-//        // 5. Build URLRequest with Cookie header
-//        var request = URLRequest(url: url)
-//        request.httpMethod = "POST"
-//        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-//        
-//        //    Attach the existing JSESSIONID as a Cookie
-//        request.setValue("JSESSIONID=\(session)", forHTTPHeaderField: "Cookie")
-//        request.httpBody = jsonData
-//        
-//        do {
-//            // 6. Execute the request
-//            let (data, response) = try await URLSession.shared.data(for: request)
-//            guard let httpResponse = response as? HTTPURLResponse else {
-//                print("No HTTPURLResponse when fetching session info.")
-//                return nil
-//            }
-//            
-//            // 7. If status is not 2xx, treat as error
-//            guard (200...299).contains(httpResponse.statusCode) else {
-//                print("Failed to fetch session info. HTTP status:", httpResponse.statusCode)
-//                return nil
-//            }
-//            
-//            // 8. Parse JSON into a dictionary
-//            if let jsonObject = try? JSONSerialization.jsonObject(with: data, options: []) as? [String: Any] {
-//                //print("Session info response:", jsonObject)
-//                return jsonObject
-//            } else {
-//                print("Could not decode JSON for session info.")
-//                return nil
-//            }
-//            
-//        } catch {
-//            print("Network or decoding error during session info request:", error)
-//            return nil
-//        }
-//    }
-    
+        
     func getTcSessionInfo(tcEndpointUrl: String) async -> SessionInfoResponse? {
            // 1) Ensure we have a JSESSIONID from a prior login
            guard let session = self.jsessionId else {
@@ -270,77 +202,77 @@ class TeamcenterAPIService: ObservableObject {
                return nil
            }
        }
-    func getUserHomeFolder(tcEndpointUrl: String, userUid: String) async -> [String: Any]? {
-        // 1. Make sure we have a JSESSIONID from a prior login
-        guard let session = self.jsessionId else {
-            print("Cannot call getUserHomeFolder: no JSESSIONID stored. Please login first.")
-            return nil
-        }
-        
-        // 2. Build URL from the exact endpoint string that was passed in
-        guard let url = URL(string: tcEndpointUrl) else {
-            print("Invalid URL string: \(tcEndpointUrl)")
-            return nil
-        }
-        
-        let payload: [String: Any] = [
-            "header": [
-                "state": [:],
-                "policy": [:]
-            ],
-            "body": [
-                "objects": [[
-                    "uid": userUid,
-                    "className": "User",
-                    "type": "User"
-                ]],
-                "attributes": ["home_folder"]
-            ]
-        ]
-        
-        // 4. Serialize payload to Data
-        let jsonData: Data
-        do {
-            jsonData = try JSONSerialization.data(withJSONObject: payload, options: [])
-        } catch {
-            print("Failed to serialize JSON payload for getUserHomeFolder: \(error)")
-            return nil
-        }
-        
-        // 5. Build POST request and attach JSESSIONID in Cookie header
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.setValue("JSESSIONID=\(session)", forHTTPHeaderField: "Cookie")
-        request.httpBody = jsonData
-        
-        do {
-            // 6. Execute the request
-            let (data, response) = try await URLSession.shared.data(for: request)
-            guard let httpResponse = response as? HTTPURLResponse else {
-                print("getUserHomeFolder did not return an HTTPURLResponse.")
-                return nil
-            }
-            
-            // 7. Check for 2xx status code
-            guard (200...299).contains(httpResponse.statusCode) else {
-                print("getUserHomeFolder failed. HTTP status = \(httpResponse.statusCode).")
-                return nil
-            }
-            
-            // 8. Parse the raw JSON dictionary
-            if let jsonObject = try? JSONSerialization.jsonObject(with: data, options: []) as? [String: Any] {
-                //print("Received raw user home_folder JSON: \(jsonObject)")
-                return jsonObject
-            } else {
-                print("Could not decode JSON from getUserHomeFolder.")
-                return nil
-            }
-        } catch {
-            print("Network or decoding error during getUserHomeFolder: \(error)")
-            return nil
-        }
-    }
+//    func getUserHomeFolder(tcEndpointUrl: String, userUid: String) async -> [String: Any]? {
+//        // 1. Make sure we have a JSESSIONID from a prior login
+//        guard let session = self.jsessionId else {
+//            print("Cannot call getUserHomeFolder: no JSESSIONID stored. Please login first.")
+//            return nil
+//        }
+//        
+//        // 2. Build URL from the exact endpoint string that was passed in
+//        guard let url = URL(string: tcEndpointUrl) else {
+//            print("Invalid URL string: \(tcEndpointUrl)")
+//            return nil
+//        }
+//        
+//        let payload: [String: Any] = [
+//            "header": [
+//                "state": [:],
+//                "policy": [:]
+//            ],
+//            "body": [
+//                "objects": [[
+//                    "uid": userUid,
+//                    "className": "User",
+//                    "type": "User"
+//                ]],
+//                "attributes": ["home_folder"]
+//            ]
+//        ]
+//        
+//        // 4. Serialize payload to Data
+//        let jsonData: Data
+//        do {
+//            jsonData = try JSONSerialization.data(withJSONObject: payload, options: [])
+//        } catch {
+//            print("Failed to serialize JSON payload for getUserHomeFolder: \(error)")
+//            return nil
+//        }
+//        
+//        // 5. Build POST request and attach JSESSIONID in Cookie header
+//        var request = URLRequest(url: url)
+//        request.httpMethod = "POST"
+//        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+//        request.setValue("JSESSIONID=\(session)", forHTTPHeaderField: "Cookie")
+//        request.httpBody = jsonData
+//        
+//        do {
+//            // 6. Execute the request
+//            let (data, response) = try await URLSession.shared.data(for: request)
+//            guard let httpResponse = response as? HTTPURLResponse else {
+//                print("getUserHomeFolder did not return an HTTPURLResponse.")
+//                return nil
+//            }
+//            
+//            // 7. Check for 2xx status code
+//            guard (200...299).contains(httpResponse.statusCode) else {
+//                print("getUserHomeFolder failed. HTTP status = \(httpResponse.statusCode).")
+//                return nil
+//            }
+//            
+//            // 8. Parse the raw JSON dictionary
+//            if let jsonObject = try? JSONSerialization.jsonObject(with: data, options: []) as? [String: Any] {
+//                //print("Received raw user home_folder JSON: \(jsonObject)")
+//                return jsonObject
+//            } else {
+//                print("Could not decode JSON from getUserHomeFolder.")
+//                return nil
+//            }
+//        } catch {
+//            print("Network or decoding error during getUserHomeFolder: \(error)")
+//            return nil
+//        }
+//    }
         
     func getProperties(
             tcEndpointUrl: String,
@@ -437,6 +369,98 @@ class TeamcenterAPIService: ObservableObject {
 
             } catch {
                 print("Network or decoding error during getProperties: \(error)")
+                return nil
+            }
+        }
+    
+    func getUserHomeFolder(
+            tcEndpointUrl: String,
+            userUid: String
+        ) async -> String? {
+            // 1) Make sure we have a stored JSESSIONID
+            guard let session = self.jsessionId else {
+                print("No JSESSIONID found. Please login first.")
+                return nil
+            }
+
+            // 2) Build the endpoint URL
+            guard let url = URL(string: tcEndpointUrl) else {
+                print("Invalid URL string: \(tcEndpointUrl)")
+                return nil
+            }
+
+            // 3) Build the exact payload for fetching "home_folder"
+            let payload: [String: Any] = [
+                "header": [
+                    "state": [:],
+                    "policy": [:]
+                ],
+                "body": [
+                    "objects": [[
+                        "uid": userUid,
+                        "className": "User",
+                        "type": "User"
+                    ]],
+                    // We only request the "home_folder" attribute
+                    "attributes": ["home_folder"]
+                ]
+            ]
+
+            // 4) Serialize payload to JSON data
+            let jsonData: Data
+            do {
+                jsonData = try JSONSerialization.data(withJSONObject: payload, options: [])
+            } catch {
+                print("Failed to serialize JSON for getUserHomeFolder: \(error)")
+                return nil
+            }
+
+            // 5) Create and send the POST request
+            var request = URLRequest(url: url)
+            request.httpMethod = "POST"
+            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            // Attach the JSESSIONID cookie
+            request.setValue("JSESSIONID=\(session)", forHTTPHeaderField: "Cookie")
+            request.httpBody = jsonData
+
+            do {
+                // 6) Execute the network call
+                let (data, response) = try await URLSession.shared.data(for: request)
+                guard let httpResponse = response as? HTTPURLResponse else {
+                    print("getUserHomeFolder did not return an HTTPURLResponse.")
+                    return nil
+                }
+
+                // 7) Check for an HTTP 2xx status
+                guard (200...299).contains(httpResponse.statusCode) else {
+                    print("getUserHomeFolder failed. HTTP status =", httpResponse.statusCode)
+                    return nil
+                }
+
+                // 8) Decode the JSON into our Codable model
+                let decoder = JSONDecoder()
+                let respObj = try decoder.decode(GetPropertiesResponse.self, from: data)
+
+                // 9) Find the single ModelObject for our userUid
+                guard
+                    let modelDict = respObj.modelObjects,
+                    let userObj = modelDict[userUid],
+                    let props = userObj.props
+                else {
+                    print("No modelObjects or props found for user UID \(userUid).")
+                    return nil
+                }
+
+                // 10) Look up the "home_folder" entry and return its first UI value
+                if let homeVal = props["home_folder"]?.dbValues?.first {
+                    return homeVal
+                } else {
+                    print("\"home_folder\" not found or has no uiValues.")
+                    return nil
+                }
+
+            } catch {
+                print("Network or decoding error during getUserHomeFolder:", error)
                 return nil
             }
         }

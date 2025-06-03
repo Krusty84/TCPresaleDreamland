@@ -125,8 +125,12 @@ struct SettingsTabContent: View {
 
                             tcStatusIndicator
 
-                            Button("Verify", action: vm.verifyTCConnect)
-                                .frame(minWidth: 60)
+                          
+                            Button("Verify") {
+                                          Task {
+                                              await vm.verifyTCConnect()
+                                          }
+                                      }.frame(minWidth: 60)
 
                             Spacer()
                             
@@ -139,6 +143,8 @@ struct SettingsTabContent: View {
                                 .frame(minWidth: 120)
                             
                         }
+                        FolderSelectionView(rawData: vm.homeFolderContent)
+
                     }
                     .padding(.horizontal, 8)
                 } header: {

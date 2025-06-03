@@ -67,6 +67,8 @@ class SettingsTabViewModel: ObservableObject {
         didSet { SettingsManager.shared.tcUserHomeFolderUid = tcUserHomeFolderUid }
     }
     
+    @Published var homeFolderContent: [[String: Any]] = []
+    
     init() {
         let mgr = SettingsManager.shared
         self.appLoggingEnabled = mgr.appLoggingEnabled
@@ -102,17 +104,17 @@ class SettingsTabViewModel: ObservableObject {
                     
                     if let apiError = error as? APIError {
                         switch apiError {
-                        case .unauthorized:
-                            self.responseCode = 401
-                            self.errorMessage = "Invalid DeepSeek API Key"
-                            LoggerHelper.error("Invalid DeepSeek API Key")
-                        case .httpError(let code):
-                            self.responseCode = code
-                            self.errorMessage = "verifyAPIKey Key Error (\(code))"
-                            LoggerHelper.error("verifyAPIKey Key Error: \(code)")
-                        default:
-                            self.errorMessage = error.localizedDescription
-                            LoggerHelper.error("verifyAPIKey Error: \(error.localizedDescription)")
+                            case .unauthorized:
+                                self.responseCode = 401
+                                self.errorMessage = "Invalid DeepSeek API Key"
+                                LoggerHelper.error("Invalid DeepSeek API Key")
+                            case .httpError(let code):
+                                self.responseCode = code
+                                self.errorMessage = "verifyAPIKey Key Error (\(code))"
+                                LoggerHelper.error("verifyAPIKey Key Error: \(code)")
+                            default:
+                                self.errorMessage = error.localizedDescription
+                                LoggerHelper.error("verifyAPIKey Error: \(error.localizedDescription)")
                         }
                     } else {
                         self.errorMessage = error.localizedDescription
@@ -134,102 +136,80 @@ class SettingsTabViewModel: ObservableObject {
     /// Calls TeamcenterAPIService.login(...) with the saved tcUsername / tcPassword.
     /// Updates `tcSessionId` (on success) or `tcErrorMessage` (on failure).
     
-    func verifyTCConnect() {
-        // Clear any old state
+    func verifyTCConnect() async {
+        // 1) Reset state on the main actor
         tcSessionId = nil
         tcResponseCode = nil
         tcErrorMessage = nil
         isLoading = true
-        
-        Task {
-            do {
-                let sessionId = await tcApi.tcLogin(
-                    tcEndpointUrl: APIConfig.tcLoginUrl(tcUrl: tcURL),
-                    userName: tcUsername,
-                    userPassword: tcPassword
-                )
-                
-                if let validSession = sessionId {
-                    self.tcSessionId = validSession
-                    
-                    let rawSessionInfo = await tcApi.getTcSessionInfo(tcEndpointUrl: APIConfig.tcSessionInfoUrl(tcUrl: tcURL))
-                    DispatchQueue.main.async { [self] in
-                        self.isLoading = false
-                        self.tcSessionId = validSession
-                        self.tcResponseCode = 200
-                        
-                        if let json = rawSessionInfo {
-                            self.tcUserUid = tcHelpers.getUserUID(from: json)
-                        } else {
-                            // getSessionInfo failed
-                            self.tcErrorMessage = "Could not fetch raw session info"
-                            LoggerHelper.error("getSessionInfo returned nil")
-                        }
-                    }
-                    
-                    let rawUserHomeFolderUid=await tcApi.getUserHomeFolder(tcEndpointUrl: APIConfig.tcGetPropertiesUrl(tcUrl: tcURL), userUid: self.tcUserUid)
-                    DispatchQueue.main.async { [self] in
-                        self.isLoading = false
-                        self.tcSessionId = validSession
-                        self.tcResponseCode = 200
-                        
-                        if let json = rawUserHomeFolderUid {
-                            self.tcUserHomeFolderUid=tcHelpers.getHomeUserFolderUid(from: json)
-                    
-                        } else {
-                            // getHomeFolderUid failed
-                            self.tcErrorMessage = "Could not fetch raw homefolder info"
-                            LoggerHelper.error("getUserHomeFolder returned nil")
-                        }
-                    }
-                    
-                    if let folderArray = await tcApi.expandFolder(tcUrl: tcURL,
-                                                             folderUid: self.tcUserHomeFolderUid,
-                                                             expItemRev: false, latestNRevs: -1, info: [], contentTypesFilter: [],
-                                                    propertyAttributes:["object_name", "object_desc", "creation_date"])
-                    {
-                            // 3) Now `folderArray` is [[String: Any]]
-                            //    You can loop over it or store it:
-                            for folderDict in folderArray {
-                                // Each folderDict has keys: "uid", "className", "type", plus your attribute names
-                                if let uid = folderDict["uid"] as? String,
-                                   let name = folderDict["object_name"] as? String {
-                                    print("Folder UID = \(uid), name = \(name)")
-                                }
-                            }
 
-                            // 4) You can also save folderArray to a property if you want:
-                            //self.myFolders = folderArray
-                        } else {
-                            print("expandFolder returned nil or failed")
-                        }
-                   
-                   
-                } else {
-                    // tcLogin returned nil → login failure
-                    DispatchQueue.main.async {
-                        self.isLoading = false
-                        self.tcResponseCode = 401
-                        self.tcErrorMessage = "Teamcenter login failed"
-                        LoggerHelper.error("TC login failed; no JSESSIONID returned.")
-                    }
-                }
-            } catch {
-                // This shouldn’t normally run, since our async methods return nil rather than throw,
-                // but we handle it defensively anyway.
-                DispatchQueue.main.async {
-                    self.isLoading = false
-                    self.tcSessionId = nil
-                    self.tcResponseCode = nil
-                    self.tcErrorMessage = error.localizedDescription
-                    LoggerHelper.error("Error during TC connect: \(error.localizedDescription)")
-                }
-            }
+        // 2) Attempt login (these calls run off the main actor, but when we assign back, we're on MainActor)
+        let sessionId = await tcApi.tcLogin(
+            tcEndpointUrl: APIConfig.tcLoginUrl(tcUrl: tcURL),
+            userName: tcUsername,
+            userPassword: tcPassword
+        )
+
+        // 3) If login failed:
+        guard let validSession = sessionId else {
+            isLoading = false
+            tcResponseCode = 401
+            tcErrorMessage = "Teamcenter login failed"
+            LoggerHelper.error("TC login failed; no JSESSIONID returned.")
+            return
         }
-        
-    
 
+        // 4) Login succeeded: publish on main actor
+        tcSessionId = validSession
+
+        // 5) Fetch session info
+        let rawSessionInfo = await tcApi.getTcSessionInfo(
+            tcEndpointUrl: APIConfig.tcSessionInfoUrl(tcUrl: tcURL)
+        )
+
+        if let info = rawSessionInfo {
+            // still on MainActor
+            tcResponseCode = 200
+            tcUserUid = info.user.uid
+        } else {
+            tcResponseCode = 200
+            tcErrorMessage = "Could not fetch session info"
+            LoggerHelper.error("getSessionInfo returned nil")
+        }
+
+        // 6) Fetch the user’s home‐folder UID
+        let rawHomeFolderUid = await tcApi.getUserHomeFolder(
+            tcEndpointUrl: APIConfig.tcGetPropertiesUrl(tcUrl: tcURL),
+            userUid: tcUserUid
+        )
+
+        if let folderUid = rawHomeFolderUid {
+            tcUserHomeFolderUid = folderUid
+        } else {
+            tcErrorMessage = "Could not fetch homefolder UID"
+            LoggerHelper.error("getUserHomeFolder returned nil")
+        }
+
+        // 7) Expand the folder contents
+        if let folderArray = await tcApi.expandFolder(
+            tcUrl: tcURL,
+            folderUid: tcUserHomeFolderUid,
+            expItemRev: false,
+            latestNRevs: -1,
+            info: [],
+            contentTypesFilter: [],
+            propertyAttributes: ["object_name", "object_desc", "creation_date"]
+        ) {
+            // Still on MainActor, so it’s safe to assign to your @Published array
+            homeFolderContent = folderArray
+        } else {
+            print("expandFolder returned nil or failed")
+        }
+
+        // 8) Finally, stop the loading indicator
+        isLoading = false
     }
+
 }
 
 

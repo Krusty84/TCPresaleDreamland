@@ -12,24 +12,7 @@ class TCHelpers: ObservableObject {
     static let shared = TCHelpers()
     private init() { }
     
-    /// Given a JSON dictionary, return the user UID.
-    ///
-    /// - Tries the old format: user.dbValues first.
-    /// - If no dbValues, tries the new format: user.uid directly.
-    /// - Returns nil if neither is found.
-    func getUserUID(from jsonObject: [String: Any]) -> String {
-        guard let userDict = jsonObject["user"] as? [String: Any] else {
-            return ""  // or return some sentinel value
-        }
-        if let dbArray = userDict["dbValues"] as? [Any],
-           let firstValue = dbArray.first as? String {
-            return firstValue
-        }
-        if let directUID = userDict["uid"] as? String {
-            return directUID
-        }
-        return ""
-    }
+ 
     
     func getHomeUserFolderUid(from jsonObject: [String: Any]) -> String {
             // 1. Get the "plain" array and take its first element as the user key
