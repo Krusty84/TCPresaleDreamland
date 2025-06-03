@@ -8,18 +8,49 @@
 import SwiftUI
 
 struct ItemsGeneratorContent: View {
-    @StateObject private var viewModel = ItemsGeneratorViewModel()
+    @StateObject private var vm = ItemsGeneratorViewModel()
 
     var body: some View {
-        VStack(spacing: 16) {
-            Text(viewModel.title)
-                .font(.title)
-            Button("Change Title") {
-                viewModel.changeTitle()
+        VStack(alignment: .leading, spacing: 0) {
+            // Top controls (left-aligned)
+            HStack {
+                TextField("Domain", text: $vm.domainName)
+                    .textFieldStyle(RoundedBorderTextFieldStyle())
+                    .frame(width: 200)
+                
+                TextField("Number", text: $vm.count)
+                    .textFieldStyle(RoundedBorderTextFieldStyle())
+                    .frame(width: 200)
+                
+                Button("Generate Items") {
+                    vm.generateItems()
+                }
+                .disabled(vm.isLoading)
             }
-            .buttonStyle(.borderedProminent)
+            .padding()
+            
+            Divider()
+            
+            if vm.isLoading {
+                       ProgressView()
+                   }
+                   
+                   if let errorMessage = vm.errorMessage {
+                       Text(errorMessage)
+                           .foregroundColor(.red)
+                   }
+                   
+                   List(vm.generatedItems, id: \.name) { item in
+                       VStack(alignment: .leading) {
+                           Text(item.name).font(.headline)
+                           Text(item.desc).foregroundColor(.secondary)
+                       }
+                   }
+            
+            // Content area
+          
         }
-        .padding()
+        .frame(minWidth: 600, minHeight: 500)
     }
 }
 

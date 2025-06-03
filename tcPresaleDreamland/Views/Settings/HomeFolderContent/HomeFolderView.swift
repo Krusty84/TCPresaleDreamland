@@ -22,11 +22,11 @@ public struct FolderSelectionView: View {
     @State private var selectedItemsUid: String
     @State private var selectedBomsUid: String
     @State private var selectedRequirementsUid: String
-
+    
     @State private var savedItemsName: String
     @State private var savedBomsName: String
     @State private var savedRequirementsName: String
-
+    
     // 5) Compute only those entries where className == "Folder"
     private var folders: [FolderItem] {
         rawData.compactMap { dict in
@@ -41,7 +41,7 @@ public struct FolderSelectionView: View {
             return nil
         }
     }
-
+    
     // MARK: - Initializer
     public init(rawData: [[String: Any]]) {
         self.rawData = rawData
@@ -68,7 +68,7 @@ public struct FolderSelectionView: View {
         
         
     }
-
+    
     public var body: some View {
         HStack(spacing: 20) {
             // ─────────────────────── Items Column ───────────────────────
@@ -76,16 +76,19 @@ public struct FolderSelectionView: View {
                 Text("Items")
                     .font(.headline)
                 Picker(selection: $selectedItemsUid, label: Text("")) {
-                    Text("None").tag("")
                     // If folders are loaded, show them all
                     if !folders.isEmpty {
                         ForEach(folders) { folder in
                             Text(folder.name).tag(folder.id)
                         }
+                        // If saved UID exists but isn't in folders, still show its name
+                        if !folders.contains(where: { $0.id == selectedItemsUid }) && !savedItemsName.isEmpty {
+                            Text(savedItemsName).tag(selectedItemsUid)
+                        }
                     } else {
-                        // No data yet: if user saved a folder, show that single saved entry
-                        if !savedItemsName.isEmpty && selectedItemsUid == SettingsManager.shared.itemsFolderUid {
-                           // Text(savedItemsName).tag(savedItemsUid)
+                        // No JSON data yet: show saved name if available
+                        if !savedItemsName.isEmpty {
+                            Text(savedItemsName).tag(selectedItemsUid)
                         }
                     }
                 }
@@ -104,20 +107,24 @@ public struct FolderSelectionView: View {
                 }
             }
             .frame(maxWidth: .infinity)
-
+            
             // ────────────────────── BOM's Column ──────────────────────
             VStack(alignment: .leading, spacing: 4) {
                 Text("BOM's")
                     .font(.headline)
                 Picker(selection: $selectedBomsUid, label: Text("")) {
-                    Text("None").tag("")
                     if !folders.isEmpty {
                         ForEach(folders) { folder in
                             Text(folder.name).tag(folder.id)
                         }
+                        // If saved UID exists but isn't in folders, still show its name
+                        if !folders.contains(where: { $0.id == selectedBomsUid }) && !savedBomsName.isEmpty {
+                            Text(savedBomsName).tag(selectedBomsUid)
+                        }
                     } else {
-                        if !savedBomsName.isEmpty && selectedBomsUid == SettingsManager.shared.bomsFolderUid {
-                          //  Text(savedBomsName).tag(savedBomsUid)
+                        // No JSON data yet: show saved name if available
+                        if !savedBomsName.isEmpty {
+                            Text(savedBomsName).tag(selectedBomsUid)
                         }
                     }
                 }
@@ -134,20 +141,24 @@ public struct FolderSelectionView: View {
                 }
             }
             .frame(maxWidth: .infinity)
-
+            
             // ────────────────── Requirements Column ──────────────────
             VStack(alignment: .leading, spacing: 4) {
                 Text("Requirements")
                     .font(.headline)
                 Picker(selection: $selectedRequirementsUid, label: Text("")) {
-                    Text("None").tag("")
                     if !folders.isEmpty {
                         ForEach(folders) { folder in
                             Text(folder.name).tag(folder.id)
                         }
+                        // If saved UID exists but isn't in folders, still show its name
+                        if !folders.contains(where: { $0.id == selectedRequirementsUid }) && !savedRequirementsName.isEmpty {
+                            Text(savedBomsName).tag(selectedBomsUid)
+                        }
                     } else {
-                        if !savedRequirementsName.isEmpty && selectedRequirementsUid == SettingsManager.shared.requirementsFolderUid {
-                           // Text(savedRequirementsName).tag(savedRequirementsUid)
+                        // No JSON data yet: show saved name if available
+                        if !savedRequirementsName.isEmpty {
+                            Text(savedRequirementsName).tag(selectedRequirementsUid)
                         }
                     }
                 }
@@ -174,9 +185,9 @@ public struct FolderSelectionView: View {
             validateSelections()
         }
     }
-
+    
     // MARK: - Helpers
-
+    
     private func validateSelections() {
         // Only clear saved selection if folders are loaded and UID not found
         if !folders.isEmpty {

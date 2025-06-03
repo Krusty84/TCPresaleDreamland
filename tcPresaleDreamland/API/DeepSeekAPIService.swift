@@ -47,10 +47,13 @@ class DeepSeekAPIService: ObservableObject {
     }
     
     func chatLLM(apiKey: String, prompt: String) async throws -> [String: Any] {
+        print("1. Starting chatLLM")
         guard let url = URL(string: APIConfig.deepSeekChatCcompletions) else {
+            print("2. Invalid URL")
             throw APIError.invalidURL
         }
         
+        print("3. URL is valid: \(url)")
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
@@ -59,29 +62,45 @@ class DeepSeekAPIService: ObservableObject {
         let requestBody: [String: Any] = [
             "model": "deepseek-chat",
             "messages": [
+                ["role": "system", "content": "You are a helpful and high experience system engineer"],
                 ["role": "user", "content": prompt]
             ],
-            "response_format": ["type": "json_object"] // Force JSON response
+            "type": "json_object",
+            // Optional settings:
+            "temperature": 0.7,
+            "max_tokens": 1000
         ]
         
+        print("4. Request body created")
         request.httpBody = try JSONSerialization.data(withJSONObject: requestBody)
         
+        print("5. Starting network request...")
         let (data, response) = try await URLSession.shared.data(for: request)
+        print("6. Network request completed")
         
         guard let httpResponse = response as? HTTPURLResponse else {
+            print("7. Invalid response type")
             throw APIError.invalidResponse
         }
         
+        print("8. Received HTTP response: \(httpResponse.statusCode)")
+        
         switch httpResponse.statusCode {
         case 200...299:
+            print("9. Success status code")
             if let json = try JSONSerialization.jsonObject(with: data) as? [String: Any] {
+                print("10. JSON parsed successfully")
+                print("data: ",json)
                 return json
             } else {
+                print("11. Invalid JSON")
                 throw APIError.invalidJSON
             }
         case 401:
+            print("12. Unauthorized")
             throw APIError.unauthorized
         default:
+            print("13. HTTP Error: \(httpResponse.statusCode)")
             throw APIError.httpError(statusCode: httpResponse.statusCode)
         }
     }
