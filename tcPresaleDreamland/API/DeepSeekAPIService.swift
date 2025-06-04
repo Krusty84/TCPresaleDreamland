@@ -65,7 +65,7 @@ class DeepSeekAPIService: ObservableObject {
                 ["role": "system", "content": "You are a helpful and high experience system engineer"],
                 ["role": "user", "content": prompt]
             ],
-            "type": "json_object",
+            "response_format": ["type": "json_object"],
             // Optional settings:
             "temperature": 0.7,
             "max_tokens": 1000

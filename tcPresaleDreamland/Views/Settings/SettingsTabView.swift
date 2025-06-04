@@ -18,7 +18,7 @@ struct SettingsTabContent: View {
         VStack(spacing: 0) {
             Picker("", selection: $selectedTab) {
                 Text("General").tag(0)
-                Text("LLM Prompts").tag(1)
+                Text("LLM").tag(1)
                 Text("Teamcenter").tag(2)
             }
             .pickerStyle(.segmented)
@@ -52,7 +52,7 @@ struct SettingsTabContent: View {
                     }
                     .padding(.horizontal, 8)
                 } header: {
-                    SectionHeader(title: "Application Preferences", systemImage: "gearshape.fill")
+                    SectionHeader(title: "Application Preferences", systemImage: "gearshape.fill", isExpanded: true)
                 }
 
                 Divider()
@@ -67,7 +67,7 @@ struct SettingsTabContent: View {
                     }
                     .padding(.horizontal, 8)
                 } header: {
-                    SectionHeader(title: "API Key", systemImage: "key.fill")
+                    SectionHeader(title: "API Key", systemImage: "key.fill",isExpanded: true)
                 }
             }
             .padding(20)
@@ -77,28 +77,185 @@ struct SettingsTabContent: View {
     // MARK: LLM Prompts Tab
     private var llmPromptsTab: some View {
         ScrollView {
-            VStack(spacing: 20) {
-                Section {
-                    VStack(alignment: .leading, spacing: 10) {
-                        TextField("BOM Generation Prompt", text: $vm.bomPrompt)
-                            .textFieldStyle(RoundedBorderTextFieldStyle())
-                        TextField("Req Spec Generation Prompt", text: $vm.reqSpecPrompt)
-                            .textFieldStyle(RoundedBorderTextFieldStyle())
-                        TextField("Items Generation Prompt", text: $vm.itemsPrompt)
-                            .textFieldStyle(RoundedBorderTextFieldStyle())
+            VStack(spacing: 16) {
+                // BOM Generation Section
+                DisclosureGroup(isExpanded: $vm.isBOMSectionExpanded) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        TextEditor(text: $vm.bomPrompt)
+                            .font(.body)
+                            .frame(minHeight: 80)
+                            .padding(4)
+                            .background(Color(.textBackgroundColor))
+                            .cornerRadius(6)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 6)
+                                    .stroke(Color(.separatorColor), lineWidth: 1)
+                            )
+                        
+                        HStack(spacing: 20) {
+                            HStack {
+                                Slider(value: $vm.bomTemperature, in: 0...1, step: 0.1)
+                                Text("\(vm.bomTemperature, specifier: "%.1f")")
+                                    .monospacedDigit()
+                                    .frame(width: 30, alignment: .trailing)
+                            }
+                            
+                            HStack {
+                                Text("Max Tokens")
+                                Stepper(value: $vm.bomMaxTokens, in: 100...4000, step: 100) {
+                                    Text("\(vm.bomMaxTokens)")
+                                        .monospacedDigit()
+                                        .frame(width: 45, alignment: .trailing)
+                                }
+                            }
+                        }
+                        .padding(.vertical, 4)
+                        
+                        HStack {
+                            Spacer()
+                            Button(action: vm.resetBOMToDefault) {
+                                Text("Reset Defaults")
+                                    .frame(minWidth: 100)
+                            }
+                            .controlSize(.regular)
+                        }
+                        .padding(.top, 8)
                     }
-                    .padding(.horizontal, 8)
-                } header: {
-                    SectionHeader(title: "LLM Prompts", systemImage: "brain.head.profile")
+                    .padding(12)
+                    .background(Color(.windowBackgroundColor))
+                    .cornerRadius(8)
+                } label: {
+                    SectionHeader(title: "BOM Generation",
+                                systemImage: "list.bullet.rectangle",
+                                isExpanded: vm.isBOMSectionExpanded)
                 }
-
-                HStack {
-                    Spacer()
-                    Button("Reset Defaults", action: vm.resetPromptsToDefault)
+                
+                // Req Spec Generation Section
+                DisclosureGroup(isExpanded: $vm.isReqSpecSectionExpanded) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        TextEditor(text: $vm.reqSpecPrompt)
+                            .font(.body)
+                            .frame(minHeight: 80)
+                            .padding(4)
+                            .background(Color(.textBackgroundColor))
+                            .cornerRadius(6)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 6)
+                                    .stroke(Color(.separatorColor), lineWidth: 1)
+                            )
+                        
+                        HStack(spacing: 20) {
+                            HStack {
+                                Slider(value: $vm.reqSpecTemperature, in: 0...1, step: 0.1)
+                                Text("\(vm.reqSpecTemperature, specifier: "%.1f")")
+                                    .monospacedDigit()
+                                    .frame(width: 30, alignment: .trailing)
+                            }
+                            
+                            HStack {
+                                Text("Max Tokens")
+                                Stepper(value: $vm.reqSpecMaxTokens, in: 100...4000, step: 100) {
+                                    Text("\(vm.reqSpecMaxTokens)")
+                                        .monospacedDigit()
+                                        .frame(width: 45, alignment: .trailing)
+                                }
+                            }
+                        }
+                        .padding(.vertical, 4)
+                    
+                        HStack {
+                            Spacer()
+                            Button(action: vm.resetReqSpecToDefault) {
+                                Text("Reset Defaults")
+                                    .frame(minWidth: 100)
+                            }
+                            .controlSize(.regular)
+                        }
+                        .padding(.top, 8)
+                    }
+                    .padding(12)
+                    .background(Color(.windowBackgroundColor))
+                    .cornerRadius(8)
+                } label: {
+                    SectionHeader(title: "Requirements Specification",
+                                systemImage: "doc.text.fill",
+                                isExpanded: vm.isReqSpecSectionExpanded)
                 }
-                .padding()
+                
+                // Items Generation Section
+                DisclosureGroup(isExpanded: $vm.isItemsSectionExpanded) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        TextEditor(text: $vm.itemsPrompt)
+                            .font(.body)
+                            .frame(minHeight: 80)
+                            .padding(4)
+                            .background(Color(.textBackgroundColor))
+                            .cornerRadius(6)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 6)
+                                    .stroke(Color(.separatorColor), lineWidth: 1)
+                            )
+                        
+                        HStack(spacing: 20) {
+                            HStack {
+                                Slider(value: $vm.itemsTemperature, in: 0...1, step: 0.1)
+                                Text("\(vm.itemsTemperature, specifier: "%.1f")")
+                                    .monospacedDigit()
+                                    .frame(width: 30, alignment: .trailing)
+                            }
+                            
+                            HStack {
+                                Text("Max Tokens")
+                                Stepper(value: $vm.itemsMaxTokens, in: 100...4000, step: 100) {
+                                    Text("\(vm.itemsMaxTokens)")
+                                        .monospacedDigit()
+                                        .frame(width: 45, alignment: .trailing)
+                                }
+                            }
+                        }
+                        .padding(.vertical, 4)
+                        
+                        HStack {
+                            Spacer()
+                            Button(action: vm.reseItemsToDefault) {
+                                Text("Reset Defaults")
+                                    .frame(minWidth: 100)
+                            }
+                            .controlSize(.regular)
+                        }
+                        .padding(.top, 8)
+                    }
+                    .padding(12)
+                    .background(Color(.windowBackgroundColor))
+                    .cornerRadius(8)
+                } label: {
+                    SectionHeader(title: "Items Generation",
+                                systemImage: "cube.box.fill",
+                                isExpanded: vm.isItemsSectionExpanded)
+                }
+                
             }
-            .padding(20)
+            .padding(16)
+        }
+        .frame(minWidth: 450, idealWidth: 500, maxWidth: .infinity)
+    }
+
+    // Custom SectionHeader view that shows disclosure indicator
+    struct SectionHeader: View {
+        let title: String
+        let systemImage: String
+        var isExpanded: Bool
+        
+        var body: some View {
+            HStack {
+                Label(title, systemImage: systemImage)
+                    .font(.headline)
+                Spacer()
+                Image(systemName: isExpanded ? "chevron.down" : "chevron.right")
+                    .foregroundColor(.secondary)
+                    .font(.caption)
+            }
+            .contentShape(Rectangle())
         }
     }
 
@@ -148,25 +305,10 @@ struct SettingsTabContent: View {
                     }
                     .padding(.horizontal, 8)
                 } header: {
-                    SectionHeader(title: "Teamcenter Settings", systemImage: "server.rack")
+                    SectionHeader(title: "Teamcenter Settings", systemImage: "server.rack",isExpanded: true)
                 }
             }
             .padding(20)
-        }
-    }
-    
-    // MARK: – Helpers
-
-    private struct SectionHeader: View {
-        let title: String
-        let systemImage: String
-        var body: some View {
-            HStack {
-                Label(title, systemImage: systemImage)
-                    .font(.headline)
-                Spacer()
-            }
-            .padding(.bottom, 8)
         }
     }
     

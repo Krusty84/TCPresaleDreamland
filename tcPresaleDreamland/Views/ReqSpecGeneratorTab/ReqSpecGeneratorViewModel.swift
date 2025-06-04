@@ -12,5 +12,14 @@ class ReqSpecGeneratorViewModel: ObservableObject {
 
     func changeTitle() {
         title = "Title changed!"
+        
+        SettingsManager.shared.bomTemperature
+        SettingsManager.shared.bomMaxTokens
+        
+        SettingsManager.shared.reqSpecTemperature
+        SettingsManager.shared.reqSpecMaxTokens
+        
+        SettingsManager.shared.itemsTemperature
+        SettingsManager.shared.itemsMaxTokens
     }
 }

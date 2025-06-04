@@ -20,7 +20,31 @@ struct ItemsGeneratorContent: View {
                 
                 TextField("Number", text: $vm.count)
                     .textFieldStyle(RoundedBorderTextFieldStyle())
-                    .frame(width: 200)
+                    .frame(width: 50)
+                
+                HStack(spacing: 4) {
+                       Text("Temp:")
+                    Stepper(value: $vm.itemsTemperature, in: 0...1, step: 0.1) {
+                        Text("\(vm.itemsTemperature, specifier: "%.1f")")
+                               .monospacedDigit()
+                               .frame(width: 40)
+                       }
+                       .disabled(true)
+                   }
+                   .frame(width: 140)
+                   
+                   // Max Tokens Stepper
+                   HStack(spacing: 4) {
+                       Text("Tokens:")
+                       Stepper(value:$vm.itemsMaxTokens, in: 100...4000, step: 100) {
+                           Text("\(vm.itemsMaxTokens)")
+                               .monospacedDigit()
+                               .frame(width: 50)
+                       }
+                       .disabled(true)
+                   }
+                   .frame(width: 160)
+                
                 
                 Button("Generate Items") {
                     vm.generateItems()

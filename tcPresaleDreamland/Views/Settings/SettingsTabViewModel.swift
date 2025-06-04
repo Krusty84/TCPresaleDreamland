@@ -23,7 +23,11 @@ class SettingsTabViewModel: ObservableObject {
     @Published var tcResponseCode: Int?
     @Published var tcErrorMessage: String?
     
-    //
+    //for UI
+    @Published var isBOMSectionExpanded = false
+    @Published var isReqSpecSectionExpanded = false
+    @Published var isItemsSectionExpanded = false
+    
     @Published var appLoggingEnabled: Bool {
         didSet { SettingsManager.shared.appLoggingEnabled = appLoggingEnabled }
     }
@@ -36,12 +40,36 @@ class SettingsTabViewModel: ObservableObject {
         didSet { SettingsManager.shared.bomPrompt = bomPrompt }
     }
     
+    @Published var bomTemperature: Double {
+        didSet { SettingsManager.shared.bomTemperature = bomTemperature }
+    }
+    
+    @Published var bomMaxTokens: Int {
+        didSet { SettingsManager.shared.bomMaxTokens = bomMaxTokens }
+    }
+    
     @Published var reqSpecPrompt: String {
         didSet { SettingsManager.shared.reqSpecPrompt = reqSpecPrompt }
     }
     
+    @Published var reqSpecTemperature: Double {
+        didSet { SettingsManager.shared.reqSpecTemperature = reqSpecTemperature }
+    }
+    
+    @Published var reqSpecMaxTokens: Int {
+        didSet { SettingsManager.shared.reqSpecMaxTokens = reqSpecMaxTokens }
+    }
+    
     @Published var itemsPrompt: String {
         didSet { SettingsManager.shared.itemsPrompt = itemsPrompt }
+    }
+    
+    @Published var itemsTemperature: Double {
+        didSet { SettingsManager.shared.itemsTemperature = itemsTemperature }
+    }
+    
+    @Published var itemsMaxTokens: Int {
+        didSet { SettingsManager.shared.itemsMaxTokens = itemsMaxTokens }
     }
     
     @Published var tcURL: String {
@@ -74,8 +102,14 @@ class SettingsTabViewModel: ObservableObject {
         self.appLoggingEnabled = mgr.appLoggingEnabled
         self.apiKey = mgr.apiKey
         self.bomPrompt = mgr.bomPrompt
+        self.bomTemperature = mgr.bomTemperature
+        self.bomMaxTokens = mgr.bomMaxTokens
         self.reqSpecPrompt = mgr.reqSpecPrompt
+        self.reqSpecTemperature = mgr.reqSpecTemperature
+        self.reqSpecMaxTokens = mgr.reqSpecMaxTokens
         self.itemsPrompt = mgr.itemsPrompt
+        self.itemsTemperature = mgr.itemsTemperature
+        self.itemsMaxTokens = mgr.itemsMaxTokens
         self.tcURL = mgr.tcURL
         self.awcURL = mgr.awcURL
         self.tcUsername = mgr.tcUsername
@@ -127,10 +161,22 @@ class SettingsTabViewModel: ObservableObject {
         }
     }
     
-    func resetPromptsToDefault() {
+    func resetBOMToDefault() {
         bomPrompt = SettingsManager.shared.defaultBOMPrompt
+        bomTemperature = SettingsManager.shared.defaultBomTemperature
+        bomMaxTokens = SettingsManager.shared.defaultBomMaxTokens
+    }
+    
+    func resetReqSpecToDefault() {
         reqSpecPrompt = SettingsManager.shared.defaultReqSpecPrompt
+        reqSpecTemperature = SettingsManager.shared.defaultReqSpecTemperature
+        reqSpecMaxTokens = SettingsManager.shared.defaultReqSpecMaxTokens
+    }
+    
+    func reseItemsToDefault() {        
         itemsPrompt = SettingsManager.shared.defaultItemsPrompt
+        itemsTemperature = SettingsManager.shared.defaultItemsTemperature
+        itemsMaxTokens = SettingsManager.shared.defaultItemsMaxTokens
     }
     
     /// Calls TeamcenterAPIService.login(...) with the saved tcUsername / tcPassword.
