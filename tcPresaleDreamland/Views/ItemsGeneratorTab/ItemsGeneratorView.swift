@@ -29,7 +29,6 @@ struct ItemsGeneratorContent: View {
                                .monospacedDigit()
                                .frame(width: 40)
                        }
-                       .disabled(true)
                    }
                    .frame(width: 140)
                    
@@ -41,7 +40,6 @@ struct ItemsGeneratorContent: View {
                                .monospacedDigit()
                                .frame(width: 50)
                        }
-                       .disabled(true)
                    }
                    .frame(width: 160)
                 
@@ -49,7 +47,7 @@ struct ItemsGeneratorContent: View {
                 Button("Generate Items") {
                     vm.generateItems()
                 }
-                .disabled(vm.isLoading)
+                .disabled(vm.isLoading || vm.domainName.isEmpty || vm.count.isEmpty)
             }
             .padding()
             

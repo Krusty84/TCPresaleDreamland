@@ -16,22 +16,14 @@ class ItemsGeneratorViewModel: ObservableObject {
     @Published var isLoading: Bool = false
     @Published var errorMessage: String?
     //
-    @Published var itemsTemperature: Double {
-        didSet {
-            SettingsManager.shared.itemsTemperature = itemsTemperature
-        }
-    }
-    
-    @Published var itemsMaxTokens: Int {
-        didSet {
-            SettingsManager.shared.itemsMaxTokens = itemsMaxTokens
-        }
-    }
-    
+    @Published var itemsTemperature: Double
+    @Published var itemsMaxTokens: Int
+        
     init() {
-        self.itemsTemperature = SettingsManager.shared.itemsTemperature
-        self.itemsMaxTokens = SettingsManager.shared.itemsMaxTokens
-    }
+            // Initialize once from SettingsManager
+            self.itemsTemperature = SettingsManager.shared.itemsTemperature
+            self.itemsMaxTokens = SettingsManager.shared.itemsMaxTokens
+        }
     
     func generateItems() {
         Task {
@@ -101,7 +93,9 @@ class ItemsGeneratorViewModel: ObservableObject {
                 // Call the DeepSeek API
                 let response = try await deepSeekApi.chatLLM(
                     apiKey: SettingsManager.shared.apiKey,
-                    prompt: prompt
+                    prompt: prompt,
+                    temperature:itemsTemperature,
+                    max_tokens: itemsMaxTokens
                 )
                 
                 // Parse the response

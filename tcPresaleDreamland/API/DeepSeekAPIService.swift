@@ -46,7 +46,7 @@ class DeepSeekAPIService: ObservableObject {
         }
     }
     
-    func chatLLM(apiKey: String, prompt: String) async throws -> [String: Any] {
+    func chatLLM(apiKey: String, prompt: String, temperature:Double, max_tokens:Int) async throws -> [String: Any] {
         print("1. Starting chatLLM")
         guard let url = URL(string: APIConfig.deepSeekChatCcompletions) else {
             print("2. Invalid URL")
@@ -67,8 +67,8 @@ class DeepSeekAPIService: ObservableObject {
             ],
             "response_format": ["type": "json_object"],
             // Optional settings:
-            "temperature": 0.7,
-            "max_tokens": 1000
+            "temperature": temperature,
+            "max_tokens": max_tokens
         ]
         
         print("4. Request body created")
