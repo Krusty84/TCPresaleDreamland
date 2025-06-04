@@ -21,10 +21,11 @@ import ElegantTabs
 
 struct MainWindow: View {
     @State private var selectedTab = 0
+    @StateObject private var itemsGeneratorVM = ItemsGeneratorViewModel()
     var body: some View {
         ElegantTabsView(selection: $selectedTab) {
             TabItem(title: "Items Generator", icon: .system(name: "batteryblock.stack")) {
-                ItemsGeneratorContent()
+                            ItemsGeneratorContent(vm: itemsGeneratorVM) // Pass it down
             }
             TabItem(title: "BOM Generator", icon: .system(name: "list.bullet.indent")) {
                 BomGeneratorContent()
