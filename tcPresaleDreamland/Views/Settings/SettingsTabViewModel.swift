@@ -27,6 +27,9 @@ class SettingsTabViewModel: ObservableObject {
     @Published var isBOMSectionExpanded = false
     @Published var isReqSpecSectionExpanded = false
     @Published var isItemsSectionExpanded = false
+    @Published var isTeamcenterGeneral = false
+    @Published var isTeamcenterObjectType = false
+    @Published var isTeamcenterDataTargetFolder = false
     
     @Published var appLoggingEnabled: Bool {
         didSet { SettingsManager.shared.appLoggingEnabled = appLoggingEnabled }

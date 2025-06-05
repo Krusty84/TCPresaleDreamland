@@ -15,7 +15,7 @@ struct FolderItem: Identifiable, Equatable {
     let name: String
 }
 
-public struct FolderSelectionView: View {
+public struct HomeFolderContent: View {
     // 1) Raw JSON data passed in (may be empty until "Get Some Data" is clicked)
     private let rawData: [[String: Any]]
     

@@ -6,6 +6,8 @@
 //
 
 import Foundation
+import Combine
+import SwiftUI
 
 class SettingsManager {
     static let shared = SettingsManager()
@@ -30,6 +32,7 @@ class SettingsManager {
     private let tcUserHomeFolderUidKey = "com.krusty84.settings.tcUserHomeFolderUid"
     private let itemsFolderUidKey = "com.krusty84.settings.itemsFolderUid"
     private let itemsFolderNameKey = "com.krusty84.settings.itemsFolderName"
+    private let itemsListOfTypesKey = "com.krusty84.settings.itemsListOfTypes"
     private let bomsFolderUidKey = "com.krusty84.settings.bomsFolderUid"
     private let bomsFolderNameKey = "com.krusty84.settings.bomsFolderName"
     private let requirementsFolderUidKey = "com.krusty84.settings.settings.requirementsFolderUid"
@@ -166,8 +169,46 @@ class SettingsManager {
         get { defaults.string(forKey: itemsFolderNameKey) ?? "" }
         set { defaults.set(newValue, forKey: itemsFolderNameKey) }
     }
-
-    // UID and Name for "BOM's"
+    
+    var itemsListOfTypes_storage: [String] {
+        get {
+            // Read what’s in UserDefaults (or empty array if none).
+            var array = defaults.stringArray(forKey: itemsListOfTypesKey) ?? []
+            
+            // If "Item" is not already there, insert it at index 0 and save.
+            if !array.contains("Item") {
+                array.insert("Item", at: 0)
+                defaults.set(array, forKey: itemsListOfTypesKey)
+            }
+            
+            return array
+        }
+        set {
+            // Make a local copy of what caller wants to save.
+            var array = newValue
+            
+            // Ensure "Item" is present exactly once, at index 0.
+            if let existingIndex = array.firstIndex(of: "Item") {
+                // Remove any extra duplicates of "Item"
+                array.removeAll(where: { $0 == "Item" })
+                array.insert("Item", at: 0)
+            } else {
+                // If it was missing, insert it now.
+                array.insert("Item", at: 0)
+            }
+            
+            // Save back into UserDefaults.
+            defaults.set(array, forKey: itemsListOfTypesKey)
+        }
+    }
+    
+    var itemsListOfTypes: Binding<[String]> {
+          Binding<[String]>(
+              get:  { self.itemsListOfTypes_storage },
+              set:  { self.itemsListOfTypes_storage = $0 }
+          )
+      }
+    
     var bomsFolderUid: String {
         get { defaults.string(forKey: bomsFolderUidKey) ?? "" }
         set { defaults.set(newValue, forKey: bomsFolderUidKey) }

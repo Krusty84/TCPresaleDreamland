@@ -65,24 +65,64 @@ struct ItemsGeneratorContent: View {
             Divider()
             
             // Content area
-            ZStack {
-                List(vm.generatedItems, id: \.name) { item in
-                    VStack(alignment: .leading) {
-                        Text(item.name).font(.headline)
-                        Text(item.desc).foregroundColor(.secondary)
+//            ZStack {
+//                List(vm.generatedItems, id: \.name) { item in
+//                    VStack(alignment: .leading) {
+//                        Text(item.name).font(.headline)
+//                        Text(item.desc).foregroundColor(.secondary)
+//                        Text(item.type).foregroundColor(.secondary)
+//                    }
+//                }
+//                
+//                if vm.isLoading {
+//                    ProgressView()
+//                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+//                }
+//                
+//                if let errorMessage = vm.errorMessage {
+//                    Text(errorMessage)
+//                        .foregroundColor(.red)
+//                }
+//            }
+            
+            List {
+                // Iterate over bindings so that each row can update the item in-place:
+                ForEach($vm.generatedItems) { $item in
+                    HStack(spacing: 12) {
+                        // 1) A checkbox (no label). Bind it to item.isEnabled:
+                        Toggle("", isOn: $item.isEnabled)
+                            .toggleStyle(CheckboxToggleStyle())
+                            .frame(width: 20) // make checkbox column narrow
+
+                        // 2) A VStack for Name ↑ and Description ↓ in the first “wide” column:
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(item.name)
+                                .font(.headline)
+                            Text(item.desc)
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                        }
+                        // Give this text‐column a fixed max width, so it doesn’t push the row too wide:
+                        .frame(maxWidth: 200, alignment: .leading)
+
+                        // 3) Spacer so that the last column (type‐picker) stays on the right:
+                        Spacer()
+
+                        // 4) A drop-down (Picker) for item.type:
+                        //    Bound to item.type, using the array vm.allTypes
+//                        Picker("", selection: $item.type) {
+//                            ForEach($vm.allTypes, id: \.self) { typeOption in
+//                                Text(typeOption).tag(typeOption)
+//                            }
+//                        }
+//                        .pickerStyle(MenuPickerStyle()) // this makes it a drop-down menu
+//                        .frame(width: 120)             // fix width so row doesn’t expand too far
+//                        .labelsHidden()
                     }
-                }
-                
-                if vm.isLoading {
-                    ProgressView()
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                }
-                
-                if let errorMessage = vm.errorMessage {
-                    Text(errorMessage)
-                        .foregroundColor(.red)
+                    .padding(.vertical, 4)
                 }
             }
+
         }
         .frame(minWidth: 600, minHeight: 500)
     }

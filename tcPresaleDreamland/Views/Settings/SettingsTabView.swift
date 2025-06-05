@@ -279,28 +279,62 @@ struct SettingsTabContent: View {
                             SecureField("Password", text: $vm.tcPassword)
                                 .textFieldStyle(RoundedBorderTextFieldStyle())
                                 .frame(minWidth: 120)
-
                             tcStatusIndicator
 
-                          
                             Button("Verify") {
                                           Task {
                                               await vm.verifyTCConnect()
                                           }
                                       }.frame(minWidth: 60)
-
                             Spacer()
-                            
-                            
-                            TextField("userUID", text: $vm.tcUserUid)
-                                .textFieldStyle(RoundedBorderTextFieldStyle())
-                                .frame(minWidth: 120)
-                            TextField("homeFolder", text: $vm.tcUserHomeFolderUid)
-                                .textFieldStyle(RoundedBorderTextFieldStyle())
-                                .frame(minWidth: 120)
-                            
+                        
                         }
-                        FolderSelectionView(rawData: vm.homeFolderContent)
+                        DisclosureGroup(isExpanded: $vm.isTeamcenterDataTargetFolder) {
+                            HomeFolderContent(rawData: vm.homeFolderContent)
+                        } label: {
+                            SectionHeader(
+                                title: "Data Target Folder",
+                                systemImage: "tray.full",
+                                isExpanded: vm.isTeamcenterObjectType
+                            )
+                        }
+                        DisclosureGroup(isExpanded: $vm.isTeamcenterObjectType) {
+                            HStack(spacing: 0) {
+                                // Column A
+                                VStack(spacing: 4) {
+                                    Text("Items")
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                    ListEditorView(items: SettingsManager.shared.itemsListOfTypes)
+                                        .frame(maxWidth: .infinity, minHeight: 50)
+                                }
+
+                                // Column B
+                                VStack(spacing: 4) {
+                                    Text("BOM's")
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                    ListEditorView(items: SettingsManager.shared.itemsListOfTypes)
+                                        .frame(maxWidth: .infinity, minHeight: 50)
+                                }
+
+                                // Column C
+                                VStack(spacing: 4) {
+                                    Text("Requirements")
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                    ListEditorView(items: SettingsManager.shared.itemsListOfTypes)
+                                        .frame(maxWidth: .infinity, minHeight: 50)
+                                }
+                            }
+                            .frame(height: 300) // keep same height as before
+                        } label: {
+                            SectionHeader(
+                                title: "Teamcenter Object Types",
+                                systemImage: "tray.full",
+                                isExpanded: vm.isTeamcenterObjectType
+                            )
+                        }
 
                     }
                     .padding(.horizontal, 8)
@@ -311,6 +345,8 @@ struct SettingsTabContent: View {
             .padding(20)
         }
     }
+    
+    
     
     // Existing API Key status view
     private var apiKeyStatusIndicator: some View {
