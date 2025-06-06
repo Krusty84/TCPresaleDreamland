@@ -39,6 +39,20 @@ class SettingsManager {
     private let requirementsFolderNameKey = "com.krusty84.settings.requirementsFolderName"
 
 
+    
+    init() {
+          // Load initial data from UserDefaults
+          var array = defaults.stringArray(forKey: itemsListOfTypesKey) ?? []
+          
+          // Ensure "Item" exists at index 0
+          if !array.contains("Item") {
+              array.insert("Item", at: 0)
+              defaults.set(array, forKey: itemsListOfTypesKey)
+          }
+          
+          self.itemsListOfTypes_storage = array
+      }
+    
     // Default prompts
     let defaultBOMPrompt = """
     Generate a Bill of Materials (BOM) for the specified product: [PRODUCT_NAME]. Return the BOM as a JSON object with the following structure: 
@@ -170,37 +184,11 @@ class SettingsManager {
         set { defaults.set(newValue, forKey: itemsFolderNameKey) }
     }
     
-    var itemsListOfTypes_storage: [String] {
-        get {
-            // Read what’s in UserDefaults (or empty array if none).
-            var array = defaults.stringArray(forKey: itemsListOfTypesKey) ?? []
-            
-            // If "Item" is not already there, insert it at index 0 and save.
-            if !array.contains("Item") {
-                array.insert("Item", at: 0)
-                defaults.set(array, forKey: itemsListOfTypesKey)
+    @Published var itemsListOfTypes_storage: [String] {
+            didSet {
+                defaults.set(itemsListOfTypes_storage, forKey: itemsListOfTypesKey)
             }
-            
-            return array
         }
-        set {
-            // Make a local copy of what caller wants to save.
-            var array = newValue
-            
-            // Ensure "Item" is present exactly once, at index 0.
-            if let existingIndex = array.firstIndex(of: "Item") {
-                // Remove any extra duplicates of "Item"
-                array.removeAll(where: { $0 == "Item" })
-                array.insert("Item", at: 0)
-            } else {
-                // If it was missing, insert it now.
-                array.insert("Item", at: 0)
-            }
-            
-            // Save back into UserDefaults.
-            defaults.set(array, forKey: itemsListOfTypesKey)
-        }
-    }
     
     var itemsListOfTypes: Binding<[String]> {
           Binding<[String]>(

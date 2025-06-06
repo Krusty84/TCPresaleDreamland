@@ -28,7 +28,7 @@ struct ListEditorView: View {
 
             // TextField + buttons to add/remove
             HStack {
-                TextField("New INTERNAL Object Name only", text: $newItemName)
+                TextField("INTERNAL Object Name only", text: $newItemName)
                     .textFieldStyle(RoundedBorderTextFieldStyle())
                     .frame(minWidth: 200)
 

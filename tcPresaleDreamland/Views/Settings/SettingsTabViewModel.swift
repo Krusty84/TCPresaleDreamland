@@ -27,7 +27,7 @@ class SettingsTabViewModel: ObservableObject {
     @Published var isBOMSectionExpanded = false
     @Published var isReqSpecSectionExpanded = false
     @Published var isItemsSectionExpanded = false
-    @Published var isTeamcenterGeneral = false
+    @Published var isTeamcenterGeneral = true
     @Published var isTeamcenterObjectType = false
     @Published var isTeamcenterDataTargetFolder = false
     

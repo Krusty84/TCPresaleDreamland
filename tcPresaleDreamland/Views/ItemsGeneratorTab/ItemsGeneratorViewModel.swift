@@ -6,8 +6,11 @@
 //
 
 import Foundation
+import SwiftUI
+import Combine
 
 class ItemsGeneratorViewModel: ObservableObject {
+    private var cancellables = Set<AnyCancellable>()
     private let tcApi = TeamcenterAPIService.shared
     private let deepSeekApi = DeepSeekAPIService.shared
     @Published var domainName: String = ""
@@ -18,11 +21,18 @@ class ItemsGeneratorViewModel: ObservableObject {
     //
     @Published var itemsTemperature: Double
     @Published var itemsMaxTokens: Int
+    @Published var itemTypes: [String] = []
     
     init() {
         // Initialize once from SettingsManager
         self.itemsTemperature = SettingsManager.shared.itemsTemperature
         self.itemsMaxTokens = SettingsManager.shared.itemsMaxTokens
+        self.itemTypes = SettingsManager.shared.itemsListOfTypes_storage
+        SettingsManager.shared.$itemsListOfTypes_storage
+                .sink { [weak self] newTypes in
+                       self?.itemTypes = newTypes
+                   }
+                   .store(in: &cancellables)
     }
     
     func generateItems() {
