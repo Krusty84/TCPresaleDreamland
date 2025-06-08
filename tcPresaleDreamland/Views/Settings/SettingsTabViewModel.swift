@@ -13,7 +13,8 @@ class SettingsTabViewModel: ObservableObject {
     private let deepSeekApi = DeepSeekAPIService.shared
     private let tcApi = TeamcenterAPIService.shared
     private let tcHelpers = TCHelpers.shared
-    @Published var apiKeyValid: Bool = false
+    @Published var deepSeekApiKeyValid: Bool = false
+    @Published var tcLoginValid: Bool = false
     @Published var isLoading: Bool = false
     @Published var responseCode: Int?            // for DeepSeek verify
     @Published var errorMessage: String?
@@ -121,6 +122,23 @@ class SettingsTabViewModel: ObservableObject {
         self.tcUserHomeFolderUid = mgr.tcUserHomeFolderUid
     }
     
+    var isValidTCURL: Bool {
+        let pattern = #"^https?://(?:(?:\d{1,3}\.){3}\d{1,3}|(?:[A-Za-z0-9]+\.)*[A-Za-z0-9]+):\d{1,5}/[A-Za-z0-9]+$"#
+        return tcURL.range(of: pattern, options: .regularExpression) != nil
+     }
+    
+    var isValidAWCURL: Bool {
+        let awcPattern = #"^https?://(?:(?:\d{1,3}\.){3}\d{1,3}|(?:[A-Za-z0-9]+\.)*[A-Za-z0-9]+):\d{1,5}$"#
+        return awcURL.range(of: awcPattern, options: .regularExpression) != nil
+    }
+    
+     let allowedUrlCharacters = CharacterSet(charactersIn:
+            "abcdefghijklmnopqrstuvwxyz" +
+            "ABCDEFGHIJKLMNOPQRSTUVWXYZ" +
+            "0123456789" +
+            "-._~:/?#[]@!$&'()*+,;=%"
+        )
+    
     func verifyAPIKey() {
         isLoading = true
         errorMessage = nil
@@ -131,13 +149,13 @@ class SettingsTabViewModel: ObservableObject {
                 let isValid = try await deepSeekApi.verifyAPIKey(apiKey: apiKey)
                 
                 DispatchQueue.main.async {
-                    self.apiKeyValid = isValid
+                    self.deepSeekApiKeyValid = isValid
                     self.responseCode = isValid ? 200 : 400
                     self.isLoading = false
                 }
             } catch {
                 DispatchQueue.main.async {
-                    self.apiKeyValid = false
+                    self.deepSeekApiKeyValid = false
                     
                     if let apiError = error as? APIError {
                         switch apiError {
@@ -220,9 +238,11 @@ class SettingsTabViewModel: ObservableObject {
             // still on MainActor
             tcResponseCode = 200
             tcUserUid = info.user.uid
+            self.tcLoginValid = true;
         } else {
             tcResponseCode = 200
             tcErrorMessage = "Could not fetch session info"
+            self.tcLoginValid = false;
             LoggerHelper.error("getSessionInfo returned nil")
         }
 

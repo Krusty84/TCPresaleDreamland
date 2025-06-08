@@ -13,32 +13,43 @@ import SwiftUI
 struct FolderItem: Identifiable, Equatable {
     let id: String
     let name: String
+    let className: String
+    let type: String
 }
 
 public struct HomeFolderContent: View {
-    // 1) Raw JSON data passed in (may be empty until "Get Some Data" is clicked)
+    // 1) Raw JSON data passed in
     private let rawData: [[String: Any]]
     
+    // Selected UIDs
     @State private var selectedItemsUid: String
     @State private var selectedBomsUid: String
     @State private var selectedRequirementsUid: String
     
+    // Saved metadata (name, className, type)
     @State private var savedItemsName: String
-    @State private var savedBomsName: String
-    @State private var savedRequirementsName: String
+    @State private var savedItemsClassName: String
+    @State private var savedItemsType: String
     
-    // 5) Compute only those entries where className == "Folder"
+    @State private var savedBomsName: String
+    @State private var savedBomsClassName: String
+    @State private var savedBomsType: String
+    
+    @State private var savedRequirementsName: String
+    @State private var savedRequirementsClassName: String
+    @State private var savedRequirementsType: String
+    
+    // 5) Only keep items where className == "Folder"
     private var folders: [FolderItem] {
         rawData.compactMap { dict in
-            if
+            guard
                 let className = dict["className"] as? String,
                 className == "Folder",
                 let uid = dict["uid"] as? String,
-                let name = dict["object_name"] as? String
-            {
-                return FolderItem(id: uid, name: name)
-            }
-            return nil
+                let name = dict["object_name"] as? String,
+                let type = dict["type"] as? String
+            else { return nil }
+            return FolderItem(id: uid, name: name, className: className, type: type)
         }
     }
     
@@ -46,169 +57,192 @@ public struct HomeFolderContent: View {
     public init(rawData: [[String: Any]]) {
         self.rawData = rawData
         
-        // Read saved UID and name from SettingsManager
-        let savedItemsUid = SettingsManager.shared.itemsFolderUid
-        let savedItemsName = SettingsManager.shared.itemsFolderName
+        // load saved UIDs
+        let itemsUid  = SettingsManager.shared.itemsFolderUid
+        let bomsUid   = SettingsManager.shared.bomsFolderUid
+        let reqUid    = SettingsManager.shared.requirementsFolderUid
         
-        let savedBomsUid = SettingsManager.shared.bomsFolderUid
-        let savedBomsName = SettingsManager.shared.bomsFolderName
+        // load saved names, classNames, types
+        let itemsName      = SettingsManager.shared.itemsFolderName
+        let itemsClassName = SettingsManager.shared.itemsFolderClassName
+        let itemsType      = SettingsManager.shared.itemsFolderType
         
-        let savedReqUid = SettingsManager.shared.requirementsFolderUid
-        let savedReqName = SettingsManager.shared.requirementsFolderName
+        let bomsName      = SettingsManager.shared.bomsFolderName
+        let bomsClassName = SettingsManager.shared.bomsFolderClassName
+        let bomsType      = SettingsManager.shared.bomsFolderType
         
-        // Initialize @State values
-        _selectedItemsUid       = State(initialValue: savedItemsUid)
-        _savedItemsName         = State(initialValue: savedItemsName)
+        let reqName      = SettingsManager.shared.requirementsFolderName
+        let reqClassName = SettingsManager.shared.requirementsFolderClassName
+        let reqType      = SettingsManager.shared.requirementsFolderType
         
-        _selectedBomsUid        = State(initialValue: savedBomsUid)
-        _savedBomsName          = State(initialValue: savedBomsName)
+        // initialize @State
+        _selectedItemsUid         = State(initialValue: itemsUid)
+        _selectedBomsUid          = State(initialValue: bomsUid)
+        _selectedRequirementsUid  = State(initialValue: reqUid)
         
-        _selectedRequirementsUid = State(initialValue: savedReqUid)
-        _savedRequirementsName   = State(initialValue: savedReqName)
+        _savedItemsName           = State(initialValue: itemsName)
+        _savedItemsClassName      = State(initialValue: itemsClassName)
+        _savedItemsType           = State(initialValue: itemsType)
         
+        _savedBomsName            = State(initialValue: bomsName)
+        _savedBomsClassName       = State(initialValue: bomsClassName)
+        _savedBomsType            = State(initialValue: bomsType)
         
+        _savedRequirementsName    = State(initialValue: reqName)
+        _savedRequirementsClassName = State(initialValue: reqClassName)
+        _savedRequirementsType      = State(initialValue: reqType)
     }
     
     public var body: some View {
         HStack(spacing: 20) {
-            // ─────────────────────── Items Column ───────────────────────
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Items")
-                    .font(.headline)
-                Picker(selection: $selectedItemsUid, label: Text("")) {
-                    // If folders are loaded, show them all
-                    if !folders.isEmpty {
-                        ForEach(folders) { folder in
-                            Text(folder.name).tag(folder.id)
-                        }
-                        // If saved UID exists but isn't in folders, still show its name
-                        if !folders.contains(where: { $0.id == selectedItemsUid }) && !savedItemsName.isEmpty {
-                            Text(savedItemsName).tag(selectedItemsUid)
-                        }
-                    } else {
-                        // No JSON data yet: show saved name if available
-                        if !savedItemsName.isEmpty {
-                            Text(savedItemsName).tag(selectedItemsUid)
-                        }
-                    }
-                }
-                .pickerStyle(PopUpButtonPickerStyle())
-                .onChange(of: selectedItemsUid) { newUid in
-                    // Save UID and name
-                    SettingsManager.shared.itemsFolderUid = newUid
-                    if let folderName = folders.first(where: { $0.id == newUid })?.name {
-                        SettingsManager.shared.itemsFolderName = folderName
-                        savedItemsName = folderName
-                    } else {
-                        // If newUid is "", clear name
-                        SettingsManager.shared.itemsFolderName = ""
-                        savedItemsName = ""
-                    }
-                }
+            makeColumn(
+                title: "Items",
+                selection: $selectedItemsUid,
+                savedName: savedItemsName
+            ) { newUid in
+                onSelect(
+                    newUid: newUid,
+                    savedName: &savedItemsName,
+                    savedClassName: &savedItemsClassName,
+                    savedType: &savedItemsType,
+                    uidKeyPath: \.itemsFolderUid,
+                    nameKeyPath: \.itemsFolderName,
+                    classKeyPath: \.itemsFolderClassName,
+                    typeKeyPath: \.itemsFolderType
+                )
             }
-            .frame(maxWidth: .infinity)
             
-            // ────────────────────── BOM's Column ──────────────────────
-            VStack(alignment: .leading, spacing: 4) {
-                Text("BOM's")
-                    .font(.headline)
-                Picker(selection: $selectedBomsUid, label: Text("")) {
-                    if !folders.isEmpty {
-                        ForEach(folders) { folder in
-                            Text(folder.name).tag(folder.id)
-                        }
-                        // If saved UID exists but isn't in folders, still show its name
-                        if !folders.contains(where: { $0.id == selectedBomsUid }) && !savedBomsName.isEmpty {
-                            Text(savedBomsName).tag(selectedBomsUid)
-                        }
-                    } else {
-                        // No JSON data yet: show saved name if available
-                        if !savedBomsName.isEmpty {
-                            Text(savedBomsName).tag(selectedBomsUid)
-                        }
-                    }
-                }
-                .pickerStyle(PopUpButtonPickerStyle())
-                .onChange(of: selectedBomsUid) { newUid in
-                    SettingsManager.shared.bomsFolderUid = newUid
-                    if let folderName = folders.first(where: { $0.id == newUid })?.name {
-                        SettingsManager.shared.bomsFolderName = folderName
-                        savedBomsName = folderName
-                    } else {
-                        SettingsManager.shared.bomsFolderName = ""
-                        savedBomsName = ""
-                    }
-                }
+            makeColumn(
+                title: "BOM's",
+                selection: $selectedBomsUid,
+                savedName: savedBomsName
+            ) { newUid in
+                onSelect(
+                    newUid: newUid,
+                    savedName: &savedBomsName,
+                    savedClassName: &savedBomsClassName,
+                    savedType: &savedBomsType,
+                    uidKeyPath: \.bomsFolderUid,
+                    nameKeyPath: \.bomsFolderName,
+                    classKeyPath: \.bomsFolderClassName,
+                    typeKeyPath: \.bomsFolderType
+                )
             }
-            .frame(maxWidth: .infinity)
             
-            // ────────────────── Requirements Column ──────────────────
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Requirements")
-                    .font(.headline)
-                Picker(selection: $selectedRequirementsUid, label: Text("")) {
-                    if !folders.isEmpty {
-                        ForEach(folders) { folder in
-                            Text(folder.name).tag(folder.id)
-                        }
-                        // If saved UID exists but isn't in folders, still show its name
-                        if !folders.contains(where: { $0.id == selectedRequirementsUid }) && !savedRequirementsName.isEmpty {
-                            Text(savedBomsName).tag(selectedBomsUid)
-                        }
-                    } else {
-                        // No JSON data yet: show saved name if available
-                        if !savedRequirementsName.isEmpty {
-                            Text(savedRequirementsName).tag(selectedRequirementsUid)
-                        }
-                    }
-                }
-                .pickerStyle(PopUpButtonPickerStyle())
-                .onChange(of: selectedRequirementsUid) { newUid in
-                    SettingsManager.shared.requirementsFolderUid = newUid
-                    if let folderName = folders.first(where: { $0.id == newUid })?.name {
-                        SettingsManager.shared.requirementsFolderName = folderName
-                        savedRequirementsName = folderName
-                    } else {
-                        SettingsManager.shared.requirementsFolderName = ""
-                        savedRequirementsName = ""
-                    }
-                }
+            makeColumn(
+                title: "Requirements",
+                selection: $selectedRequirementsUid,
+                savedName: savedRequirementsName
+            ) { newUid in
+                onSelect(
+                    newUid: newUid,
+                    savedName: &savedRequirementsName,
+                    savedClassName: &savedRequirementsClassName,
+                    savedType: &savedRequirementsType,
+                    uidKeyPath: \.requirementsFolderUid,
+                    nameKeyPath: \.requirementsFolderName,
+                    classKeyPath: \.requirementsFolderClassName,
+                    typeKeyPath: \.requirementsFolderType
+                )
             }
-            .frame(maxWidth: .infinity)
         }
         .padding()
-        // 6) When view appears or folders change, validate selections
-        .onAppear {
-            validateSelections()
+        .onAppear(perform: validateSelections)
+        .onChange(of: folders) { _ in validateSelections() }
+    }
+    
+    // Builds each VStack + Picker
+    private func makeColumn(title: String,
+                            selection: Binding<String>,
+                            savedName: String,
+                            onChange: @escaping (String) -> Void) -> some View
+    {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(title).font(.headline)
+            Picker("", selection: selection) {
+                if !folders.isEmpty {
+                    ForEach(folders) { f in Text(f.name).tag(f.id) }
+                    if !savedName.isEmpty && !folders.contains(where: { $0.id == selection.wrappedValue }) {
+                        Text(savedName).tag(selection.wrappedValue)
+                    }
+                } else if !savedName.isEmpty {
+                    Text(savedName).tag(selection.wrappedValue)
+                }
+            }
+            .pickerStyle(PopUpButtonPickerStyle())
+            .onChange(of: selection.wrappedValue, perform: onChange)
         }
-        .onChange(of: folders) { _ in
-            validateSelections()
+        .frame(maxWidth: .infinity)
+    }
+    
+    // Unified selection handler
+    private func onSelect(
+        newUid: String,
+        savedName: inout String,
+        savedClassName: inout String,
+        savedType: inout String,
+        uidKeyPath: ReferenceWritableKeyPath<SettingsManager, String>,
+        nameKeyPath: ReferenceWritableKeyPath<SettingsManager, String>,
+        classKeyPath: ReferenceWritableKeyPath<SettingsManager, String>,
+        typeKeyPath: ReferenceWritableKeyPath<SettingsManager, String>
+    ) {
+        let settings = SettingsManager.shared
+        settings[keyPath: uidKeyPath] = newUid
+        
+        if let folder = folders.first(where: { $0.id == newUid }) {
+            settings[keyPath: nameKeyPath]      = folder.name
+            settings[keyPath: classKeyPath]     = folder.className
+            settings[keyPath: typeKeyPath]      = folder.type
+            
+            savedName       = folder.name
+            savedClassName  = folder.className
+            savedType       = folder.type
+        } else {
+            // clear if none
+            settings[keyPath: nameKeyPath]      = ""
+            settings[keyPath: classKeyPath]     = ""
+            settings[keyPath: typeKeyPath]      = ""
+            
+            savedName       = ""
+            savedClassName  = ""
+            savedType       = ""
         }
     }
     
-    // MARK: - Helpers
-    
     private func validateSelections() {
-        // Only clear saved selection if folders are loaded and UID not found
-        if !folders.isEmpty {
-            if !folders.contains(where: { $0.id == selectedItemsUid }) {
-                selectedItemsUid = ""
-                SettingsManager.shared.itemsFolderUid = ""
-                SettingsManager.shared.itemsFolderName = ""
-                savedItemsName = ""
-            }
-            if !folders.contains(where: { $0.id == selectedBomsUid }) {
-                selectedBomsUid = ""
-                SettingsManager.shared.bomsFolderUid = ""
-                SettingsManager.shared.bomsFolderName = ""
-                savedBomsName = ""
-            }
-            if !folders.contains(where: { $0.id == selectedRequirementsUid }) {
-                selectedRequirementsUid = ""
-                SettingsManager.shared.requirementsFolderUid = ""
-                SettingsManager.shared.requirementsFolderName = ""
-                savedRequirementsName = ""
-            }
+        guard !folders.isEmpty else { return }
+        let settings = SettingsManager.shared
+        
+        if !folders.contains(where: { $0.id == selectedItemsUid }) {
+            settings.itemsFolderUid = ""
+            settings.itemsFolderName = ""
+            settings.itemsFolderClassName = ""
+            settings.itemsFolderType = ""
+            selectedItemsUid = ""
+            savedItemsName = ""
+            savedItemsClassName = ""
+            savedItemsType = ""
+        }
+        if !folders.contains(where: { $0.id == selectedBomsUid }) {
+            settings.bomsFolderUid = ""
+            settings.bomsFolderName = ""
+            settings.bomsFolderClassName = ""
+            settings.bomsFolderType = ""
+            selectedBomsUid = ""
+            savedBomsName = ""
+            savedBomsClassName = ""
+            savedBomsType = ""
+        }
+        if !folders.contains(where: { $0.id == selectedRequirementsUid }) {
+            settings.requirementsFolderUid = ""
+            settings.requirementsFolderName = ""
+            settings.requirementsFolderClassName = ""
+            settings.requirementsFolderType = ""
+            selectedRequirementsUid = ""
+            savedRequirementsName = ""
+            savedRequirementsClassName = ""
+            savedRequirementsType = ""
         }
     }
 }
+

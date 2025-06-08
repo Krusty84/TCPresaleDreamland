@@ -6,13 +6,14 @@
 //
 
 import SwiftUI
-import LaunchAtLogin
+import Combine
 
 // Main Settings View with three tabs: General, LLM Prompts, Teamcenter
 struct SettingsTabContent: View {
     @State private var selectedTab: Int = 0
     private let apiService = DeepSeekAPIService()
     @StateObject private var vm = SettingsTabViewModel()
+    @State private var isHovering = false
     
     var body: some View {
         VStack(spacing: 0) {
@@ -24,21 +25,21 @@ struct SettingsTabContent: View {
             .pickerStyle(.segmented)
             .padding(.horizontal, 20)
             .padding(.top, 20)
-
+            
             Divider()
-
+            
             Group {
                 switch selectedTab {
-                case 0: generalSettingsTab
-                case 1: llmPromptsTab
-                case 2: teamcenterTab
-                default: EmptyView()
+                    case 0: generalSettingsTab
+                    case 1: llmPromptsTab
+                    case 2: teamcenterTab
+                    default: EmptyView()
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
     }
-
+    
     // MARK: General Tab
     private var generalSettingsTab: some View {
         ScrollView {
@@ -54,9 +55,9 @@ struct SettingsTabContent: View {
                 } header: {
                     SectionHeader(title: "Application Preferences", systemImage: "gearshape.fill", isExpanded: true)
                 }
-
+                
                 Divider()
-
+                
                 Section {
                     HStack {
                         TextField("API Key", text: $vm.apiKey)
@@ -64,16 +65,32 @@ struct SettingsTabContent: View {
                         apiKeyStatusIndicator
                         Button("Verify", action: vm.verifyAPIKey)
                             .frame(minWidth: 60)
+                            .disabled(vm.apiKey.isEmpty)
+                            .help("Check API Key")
                     }
                     .padding(.horizontal, 8)
                 } header: {
-                    SectionHeader(title: "API Key", systemImage: "key.fill",isExpanded: true)
+                    HStack {
+                        SectionHeader(title: "DeepSeek Authentication", systemImage: "key.fill",isExpanded: true)
+                        Spacer()
+                        Link("Get API Key/Usage Data", destination: URL(string: APIConfig.deepSeekPlatform)!)
+                            .font(.subheadline)
+                            .foregroundColor(.accentColor)
+                            .onHover { hovering in
+                                isHovering = hovering
+                                if hovering {
+                                    NSCursor.pointingHand.push()
+                                } else {
+                                    NSCursor.pop()
+                                }
+                            }
+                    }
                 }
             }
             .padding(20)
         }
     }
-
+    
     // MARK: LLM Prompts Tab
     private var llmPromptsTab: some View {
         ScrollView {
@@ -91,6 +108,7 @@ struct SettingsTabContent: View {
                                 RoundedRectangle(cornerRadius: 6)
                                     .stroke(Color(.separatorColor), lineWidth: 1)
                             )
+                            .help("The prompt being used")
                         
                         HStack(spacing: 20) {
                             HStack {
@@ -99,6 +117,7 @@ struct SettingsTabContent: View {
                                     .monospacedDigit()
                                     .frame(width: 30, alignment: .trailing)
                             }
+                            .help("Creativity level: the higher the value, the more creative it is, but it might be far from reality")
                             
                             HStack {
                                 Text("Max Tokens")
@@ -108,6 +127,7 @@ struct SettingsTabContent: View {
                                         .frame(width: 45, alignment: .trailing)
                                 }
                             }
+                            .help("The maximum number of tokens that can be generated")
                         }
                         .padding(.vertical, 4)
                         
@@ -118,6 +138,7 @@ struct SettingsTabContent: View {
                                     .frame(minWidth: 100)
                             }
                             .controlSize(.regular)
+                            .help("Reset your changes")
                         }
                         .padding(.top, 8)
                     }
@@ -126,8 +147,8 @@ struct SettingsTabContent: View {
                     .cornerRadius(8)
                 } label: {
                     SectionHeader(title: "BOM Generation",
-                                systemImage: "list.bullet.rectangle",
-                                isExpanded: vm.isBOMSectionExpanded)
+                                  systemImage: "list.bullet.rectangle",
+                                  isExpanded: vm.isBOMSectionExpanded)
                 }
                 
                 // Req Spec Generation Section
@@ -143,6 +164,7 @@ struct SettingsTabContent: View {
                                 RoundedRectangle(cornerRadius: 6)
                                     .stroke(Color(.separatorColor), lineWidth: 1)
                             )
+                            .help("The prompt being used")
                         
                         HStack(spacing: 20) {
                             HStack {
@@ -151,6 +173,7 @@ struct SettingsTabContent: View {
                                     .monospacedDigit()
                                     .frame(width: 30, alignment: .trailing)
                             }
+                            .help("Creativity level: the higher the value, the more creative it is, but it might be far from reality")
                             
                             HStack {
                                 Text("Max Tokens")
@@ -160,9 +183,10 @@ struct SettingsTabContent: View {
                                         .frame(width: 45, alignment: .trailing)
                                 }
                             }
+                            .help("The maximum number of tokens that can be generated")
                         }
                         .padding(.vertical, 4)
-                    
+                        
                         HStack {
                             Spacer()
                             Button(action: vm.resetReqSpecToDefault) {
@@ -178,8 +202,8 @@ struct SettingsTabContent: View {
                     .cornerRadius(8)
                 } label: {
                     SectionHeader(title: "Requirements Specification",
-                                systemImage: "doc.text.fill",
-                                isExpanded: vm.isReqSpecSectionExpanded)
+                                  systemImage: "doc.text.fill",
+                                  isExpanded: vm.isReqSpecSectionExpanded)
                 }
                 
                 // Items Generation Section
@@ -195,6 +219,7 @@ struct SettingsTabContent: View {
                                 RoundedRectangle(cornerRadius: 6)
                                     .stroke(Color(.separatorColor), lineWidth: 1)
                             )
+                            .help("The prompt being used")
                         
                         HStack(spacing: 20) {
                             HStack {
@@ -203,6 +228,7 @@ struct SettingsTabContent: View {
                                     .monospacedDigit()
                                     .frame(width: 30, alignment: .trailing)
                             }
+                            .help("Creativity level: the higher the value, the more creative it is, but it might be far from reality")
                             
                             HStack {
                                 Text("Max Tokens")
@@ -212,6 +238,7 @@ struct SettingsTabContent: View {
                                         .frame(width: 45, alignment: .trailing)
                                 }
                             }
+                            .help("The maximum number of tokens that can be generated")
                         }
                         .padding(.vertical, 4)
                         
@@ -222,6 +249,7 @@ struct SettingsTabContent: View {
                                     .frame(minWidth: 100)
                             }
                             .controlSize(.regular)
+                            .help("Reset your changes")
                         }
                         .padding(.top, 8)
                     }
@@ -230,8 +258,8 @@ struct SettingsTabContent: View {
                     .cornerRadius(8)
                 } label: {
                     SectionHeader(title: "Items Generation",
-                                systemImage: "cube.box.fill",
-                                isExpanded: vm.isItemsSectionExpanded)
+                                  systemImage: "cube.box.fill",
+                                  isExpanded: vm.isItemsSectionExpanded)
                 }
                 
             }
@@ -239,26 +267,7 @@ struct SettingsTabContent: View {
         }
         .frame(minWidth: 450, idealWidth: 500, maxWidth: .infinity)
     }
-
-    // Custom SectionHeader view that shows disclosure indicator
-    struct SectionHeader: View {
-        let title: String
-        let systemImage: String
-        var isExpanded: Bool
-        
-        var body: some View {
-            HStack {
-                Label(title, systemImage: systemImage)
-                    .font(.headline)
-                Spacer()
-                Image(systemName: isExpanded ? "chevron.down" : "chevron.right")
-                    .foregroundColor(.secondary)
-                    .font(.caption)
-            }
-            .contentShape(Rectangle())
-        }
-    }
-
+    
     // MARK: Teamcenter Tab
     private var teamcenterTab: some View {
         ScrollView {
@@ -267,10 +276,37 @@ struct SettingsTabContent: View {
                 DisclosureGroup(isExpanded: $vm.isTeamcenterGeneral) {
                     
                     VStack(alignment: .leading, spacing: 10) {
-                        TextField("TC URL", text: $vm.tcURL)
+                        TextField("http(s)://ip-or-name-tc-webtier:port/webtier-name-typically tc",text: $vm.tcURL)
                             .textFieldStyle(RoundedBorderTextFieldStyle())
-                        TextField("AWC URL", text: $vm.awcURL)
-                            .textFieldStyle(RoundedBorderTextFieldStyle())
+                            .onReceive(Just(vm.tcURL)) { newValue in
+                                let filtered = newValue.unicodeScalars
+                                    .filter { vm.allowedUrlCharacters.contains($0) }
+                                let clean = String(String.UnicodeScalarView(filtered))
+                                if clean != newValue {
+                                    vm.tcURL = clean
+                                }
+                            }
+                        if !vm.tcURL.isEmpty && !vm.isValidTCURL {
+                            Text("⚠️ Must be http://…:port/… or https://…:port/…")
+                                .font(.footnote)
+                                .foregroundColor(.red)
+                        }
+                        
+                        TextField("http(s)://ip-or-name-awc:port",text: $vm.awcURL)
+                           .textFieldStyle(RoundedBorderTextFieldStyle())
+                           .onReceive(Just(vm.awcURL)) { newValue in
+                               let filtered = newValue.unicodeScalars
+                                   .filter { vm.allowedUrlCharacters.contains($0) }
+                               let clean = String(String.UnicodeScalarView(filtered))
+                               if clean != newValue {
+                                   vm.awcURL = clean
+                               }
+                           }
+                        if !vm.awcURL.isEmpty && !vm.isValidAWCURL {
+                            Text("⚠️ Must be http://…:port or https://…:port")
+                                   .font(.footnote)
+                                   .foregroundColor(.red)
+                           }
                         
                         // All in one line: Username, Password, Status, Verify Button
                         HStack(spacing: 10) {
@@ -281,13 +317,16 @@ struct SettingsTabContent: View {
                             SecureField("Password", text: $vm.tcPassword)
                                 .textFieldStyle(RoundedBorderTextFieldStyle())
                                 .frame(minWidth: 120)
+                            //
                             tcStatusIndicator
-                            
+                            //
                             Button("Verify") {
                                 Task {
                                     await vm.verifyTCConnect()
                                 }
-                            }.frame(minWidth: 60)
+                            }
+                            .frame(minWidth: 60)
+                            .disabled(vm.tcURL.isEmpty || vm.tcUsername.isEmpty || vm.tcPassword.isEmpty)
                             Spacer()
                             
                         }
@@ -296,7 +335,7 @@ struct SettingsTabContent: View {
                 label: {
                     SectionHeader(
                         title: "Connection Settings",
-                        systemImage: "tray.full",
+                        systemImage: "personalhotspot",
                         isExpanded: vm.isTeamcenterGeneral
                     )
                 }
@@ -305,17 +344,19 @@ struct SettingsTabContent: View {
                 } label: {
                     SectionHeader(
                         title: "Data Target Folder",
-                        systemImage: "tray.full",
+                        systemImage: "folder",
                         isExpanded: vm.isTeamcenterObjectType
                     )
                 }
+                .disabled(!vm.tcLoginValid)
+                
                 DisclosureGroup(isExpanded: $vm.isTeamcenterObjectType) {
                     HStack(spacing: 0) {
                         // Column A
                         VStack(spacing: 4) {
                             Text("Items")
                                 .font(.caption)
-                                .foregroundColor(.secondary)
+                            // .foregroundColor(.secondary)
                             ListEditorView(items: SettingsManager.shared.itemsListOfTypes)
                                 .frame(maxWidth: .infinity, maxHeight: 10)
                         }
@@ -324,7 +365,7 @@ struct SettingsTabContent: View {
                         VStack(spacing: 4) {
                             Text("BOM's")
                                 .font(.caption)
-                                .foregroundColor(.secondary)
+                            // .foregroundColor(.secondary)
                             ListEditorView(items: SettingsManager.shared.itemsListOfTypes)
                                 .frame(maxWidth: .infinity, maxHeight: 10)
                         }
@@ -333,7 +374,7 @@ struct SettingsTabContent: View {
                         VStack(spacing: 4) {
                             Text("Requirements")
                                 .font(.caption)
-                                .foregroundColor(.secondary)
+                            // .foregroundColor(.secondary)
                             ListEditorView(items: SettingsManager.shared.itemsListOfTypes)
                                 .frame(maxWidth: .infinity, maxHeight: 10)
                         }
@@ -342,22 +383,15 @@ struct SettingsTabContent: View {
                 } label: {
                     SectionHeader(
                         title: "Object Types",
-                        systemImage: "tray.full",
+                        systemImage: "pencil.and.list.clipboard",
                         isExpanded: vm.isTeamcenterObjectType
                     )
                 }
-                
-            
-           // .padding(.horizontal, 8)
-//                } header: {
-//                    SectionHeader(title: "Teamcenter Settings", systemImage: "server.rack",isExpanded: true)
-//                }
+                .disabled(!vm.tcLoginValid)
             }
             .padding(20)
         }
     }
-    
-    
     
     // Existing API Key status view
     private var apiKeyStatusIndicator: some View {
@@ -374,9 +408,9 @@ struct SettingsTabContent: View {
             else if let code = vm.responseCode {
                 HStack(spacing: 4) {
                     Image(systemName: (200...299).contains(code) || code == 400
-                                ? "checkmark.circle.fill"
-                                : "xmark.circle.fill")
-                        .foregroundColor((200...299).contains(code) || code == 400 ? .green : .red)
+                          ? "checkmark.circle.fill"
+                          : "xmark.circle.fill")
+                    .foregroundColor((200...299).contains(code) || code == 400 ? .green : .red)
                     Text(statusMessage(for: code))
                         .font(.caption)
                         .foregroundColor((200...299).contains(code) || code == 400 ? .green : .red)
@@ -393,7 +427,7 @@ struct SettingsTabContent: View {
             }
         }
     }
-
+    
     // New TC Connect status view
     private var tcStatusIndicator: some View {
         VStack(alignment: .leading, spacing: 4) {
@@ -409,9 +443,9 @@ struct SettingsTabContent: View {
             else if let code = vm.tcResponseCode {
                 HStack(spacing: 4) {
                     Image(systemName: (200...299).contains(code)
-                                ? "checkmark.circle.fill"
-                                : "xmark.circle.fill")
-                        .foregroundColor((200...299).contains(code) ? .green : .red)
+                          ? "checkmark.circle.fill"
+                          : "xmark.circle.fill")
+                    .foregroundColor((200...299).contains(code) ? .green : .red)
                     Text(tcStatusMessage(for: code))
                         .font(.caption)
                         .foregroundColor((200...299).contains(code) ? .green : .red)
@@ -431,33 +465,52 @@ struct SettingsTabContent: View {
     
     private func statusMessage(for code: Int) -> String {
         switch code {
-        case 200...299: return "Valid API Key"
-        case 400: return "Valid Key (Empty Request)"
-        case 401: return "Invalid API Key"
-        case 403: return "Access Denied"
-        case 429: return "Rate Limited"
-        case 500...599: return "Server Error"
-        default: return "Error (\(code))"
+            case 200...299: return "Valid API Key"
+            case 400: return "Valid Key (Empty Request)"
+            case 401: return "Invalid API Key"
+            case 403: return "Access Denied"
+            case 429: return "Rate Limited"
+            case 500...599: return "Server Error"
+            default: return "Error (\(code))"
         }
     }
     
     private func tcStatusMessage(for code: Int) -> String {
         switch code {
-        case 200...299: return "Connected"
-        case 401: return "Invalid Credentials"
-        case 403: return "Forbidden"
-        case 500...599: return "Server Error"
-        default: return "Error (\(code))"
+            case 200...299: return "Connected"
+            case 401: return "Invalid Credentials"
+            case 403: return "Forbidden"
+            case 500...599: return "Server Error"
+            default: return "Error (\(code))"
+        }
+    }
+    
+    // Custom SectionHeader view that shows disclosure indicator
+    struct SectionHeader: View {
+        let title: String
+        let systemImage: String
+        var isExpanded: Bool
+        
+        var body: some View {
+            HStack {
+                Label(title, systemImage: systemImage)
+                    .font(.headline)
+                Spacer()
+                Image(systemName: isExpanded ? "chevron.down" : "chevron.right")
+                    .foregroundColor(.secondary)
+                    .font(.caption)
+            }
+            .contentShape(Rectangle())
         }
     }
 }
 
 #if DEBUG
-struct SettingsTabContent_Previews: PreviewProvider {
-    static var previews: some View {
-        SettingsTabContent()
-    }
-}
+//struct SettingsTabContent_Previews: PreviewProvider {
+//    static var previews: some View {
+//        SettingsTabContent()
+//    }
+//}
 #endif
 
 

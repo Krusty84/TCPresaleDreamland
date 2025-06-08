@@ -172,3 +172,44 @@ struct GetPropertiesResponse: Codable {
         case modelObjects
     }
 }
+
+// MARK: – Codable models for createItem (only what we need)
+
+/// We only need the nested item and itemRev objects
+struct CreateItemsOutput: Codable {
+    struct NestedObject: Codable {
+        let uid: String
+    }
+    let item: NestedObject
+    let itemRev: NestedObject
+}
+
+/// Top‐level for CreateItems, decoding only “output”
+struct CreateItemsResponse: Codable {
+    let output: [CreateItemsOutput]?
+
+    enum CodingKeys: String, CodingKey {
+        case output
+    }
+}
+
+// MARK: – Codable models for createFolder response
+
+/// We only need the nested “folder” object
+struct CreateFoldersOutput: Codable {
+    struct FolderObj: Codable {
+        let uid: String
+        let className: String
+        let type: String
+    }
+    let folder: FolderObj
+}
+
+/// Top‐level for CreateFolders
+struct CreateFoldersResponse: Codable {
+    let output: [CreateFoldersOutput]?
+
+    enum CodingKeys: String, CodingKey {
+        case output
+    }
+}

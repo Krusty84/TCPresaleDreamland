@@ -30,15 +30,23 @@ class SettingsManager {
     private let tcPasswordKey = "com.krusty84.settings.tcPassword"
     private let tcUserUidKey = "com.krusty84.settings.tcUserUid"
     private let tcUserHomeFolderUidKey = "com.krusty84.settings.tcUserHomeFolderUid"
+    //
     private let itemsFolderUidKey = "com.krusty84.settings.itemsFolderUid"
     private let itemsFolderNameKey = "com.krusty84.settings.itemsFolderName"
+    private let itemsFolderClassNameKey = "com.krusty84.settings.itemsFolderClassName"
+    private let itemsFolderTypeKey = "com.krusty84.settings.itemsFolderType"
     private let itemsListOfTypesKey = "com.krusty84.settings.itemsListOfTypes"
+    //
     private let bomsFolderUidKey = "com.krusty84.settings.bomsFolderUid"
     private let bomsFolderNameKey = "com.krusty84.settings.bomsFolderName"
+    private let bomsFolderClassNameKey = "com.krusty84.settings.bomsFolderClassName"
+    private let bomsFolderTypeKey = "com.krusty84.settings.bomsFolderType"
+    //
     private let requirementsFolderUidKey = "com.krusty84.settings.settings.requirementsFolderUid"
     private let requirementsFolderNameKey = "com.krusty84.settings.requirementsFolderName"
-
-
+    private let requirementsFolderClassNameKey = "com.krusty84.settings.requirementsFolderClassName"
+    private let requirementsFolderTypeKey = "com.krusty84.settings.requirementsFolderType"
+    
     
     init() {
           // Load initial data from UserDefaults
@@ -183,6 +191,14 @@ class SettingsManager {
         get { defaults.string(forKey: itemsFolderNameKey) ?? "" }
         set { defaults.set(newValue, forKey: itemsFolderNameKey) }
     }
+    var itemsFolderClassName: String {
+        get { defaults.string(forKey: itemsFolderClassNameKey) ?? "" }
+        set { defaults.set(newValue, forKey: itemsFolderClassNameKey) }
+    }
+    var itemsFolderType: String {
+        get { defaults.string(forKey: itemsFolderTypeKey) ?? "" }
+        set { defaults.set(newValue, forKey: itemsFolderTypeKey) }
+    }
     
     @Published var itemsListOfTypes_storage: [String] {
             didSet {
@@ -205,6 +221,14 @@ class SettingsManager {
         get { defaults.string(forKey: bomsFolderNameKey) ?? "" }
         set { defaults.set(newValue, forKey: bomsFolderNameKey) }
     }
+    var bomsFolderClassName: String {
+        get { defaults.string(forKey: bomsFolderClassNameKey) ?? "" }
+        set { defaults.set(newValue, forKey: bomsFolderClassNameKey) }
+    }
+    var bomsFolderType: String {
+        get { defaults.string(forKey: bomsFolderTypeKey) ?? "" }
+        set { defaults.set(newValue, forKey: bomsFolderTypeKey) }
+    }
     
     var requirementsFolderUid: String {
         get { defaults.string(forKey: requirementsFolderUidKey) ?? "" }
@@ -213,5 +237,13 @@ class SettingsManager {
     var requirementsFolderName: String {
         get { defaults.string(forKey: requirementsFolderNameKey) ?? "" }
         set { defaults.set(newValue, forKey: requirementsFolderNameKey) }
+    }
+    var requirementsFolderClassName: String {
+        get { defaults.string(forKey: requirementsFolderClassNameKey) ?? "" }
+        set { defaults.set(newValue, forKey: requirementsFolderClassNameKey) }
+    }
+    var requirementsFolderType: String {
+        get { defaults.string(forKey: requirementsFolderTypeKey) ?? "" }
+        set { defaults.set(newValue, forKey: requirementsFolderTypeKey) }
     }
 }

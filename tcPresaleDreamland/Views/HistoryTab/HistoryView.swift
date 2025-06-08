@@ -1,14 +1,14 @@
 //
-//  ExampleView.swift
+//  HistoryView.swift
 //  tcPresaleDreamland
 //
-//  Created by Sedoykin Alexey on 21/05/2025.
+//  Created by Sedoykin Alexey on 08/06/2025.
 //
 
 import SwiftUI
 
-struct BomGeneratorContent: View {
-    @StateObject private var viewModel = BomGeneratorViewModel()
+struct HistoryContent: View {
+    //@StateObject private var viewModel = HistoryViewModel()
     
     var body: some View {
         VStack(spacing: 16) {
@@ -20,9 +20,9 @@ struct BomGeneratorContent: View {
 }
 
 #if DEBUG
-struct BomGeneratorContent_Previews: PreviewProvider {
+struct HistoryContent_Previews: PreviewProvider {
     static var previews: some View {
-        BomGeneratorContent()
+        HistoryContent()
     }
 }
 #endif

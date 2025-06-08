@@ -12,12 +12,8 @@ struct ReqSpecGeneratorContent: View {
 
     var body: some View {
         VStack(spacing: 16) {
-            Text(viewModel.title)
+            Text("This will be in the next episodes...")
                 .font(.title)
-            Button("Change Title") {
-                viewModel.changeTitle()
-            }
-            .buttonStyle(.borderedProminent)
         }
         .padding()
     }

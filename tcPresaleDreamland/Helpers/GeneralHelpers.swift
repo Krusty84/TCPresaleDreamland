@@ -13,7 +13,6 @@ import Combine
 
 class Helpers:ObservableObject {
     static let shared = Helpers() // Singleton for reusability
-    let appState = AppState.shared
     
     init (){
     }

@@ -30,3 +30,9 @@ struct Item: Codable,Identifiable, Equatable {
         // type gets its default value automatically
     }
 }
+
+struct ItemCreationResult {
+    let itemName: String
+    let success: Bool
+}
+

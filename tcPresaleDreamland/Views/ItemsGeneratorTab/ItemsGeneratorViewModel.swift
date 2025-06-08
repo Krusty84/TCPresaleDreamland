@@ -14,6 +14,7 @@ class ItemsGeneratorViewModel: ObservableObject {
     private let tcApi = TeamcenterAPIService.shared
     private let deepSeekApi = DeepSeekAPIService.shared
     @Published var domainName: String = ""
+    @Published var containerFolderUid: String = ""
     @Published var count: String = ""
     @Published var generatedItems: [Item] = []
     @Published var isLoading: Bool = false
@@ -127,5 +128,52 @@ class ItemsGeneratorViewModel: ObservableObject {
                 isLoading = false
             }
         }
+    }
+    
+    
+    func createSelectedItems() async -> [ItemCreationResult] {
+        guard !isLoading else { return [] }
+        isLoading = true
+        defer { isLoading = false }
+
+        // 1) Make the one folder for all new items
+        let (folderUid, folderCls, folderType) = await tcApi.createFolder(
+            tcEndpointUrl: APIConfig.tcCreateFolder(tcUrl: SettingsManager.shared.tcURL),
+            name: domainName,
+            desc: "Some items related to \(domainName)",
+            containerUid: SettingsManager.shared.itemsFolderUid,
+            containerClassName: SettingsManager.shared.itemsFolderClassName,
+            containerType: SettingsManager.shared.itemsFolderType
+        )
+
+        guard
+            let containerUid = folderUid,
+            let containerCls = folderCls,
+            let containerTyp = folderType
+        else {
+            // If folder creation failed, mark all as failed
+            return generatedItems
+                .filter { $0.isEnabled }
+                .map { ItemCreationResult(itemName: $0.name, success: false) }
+        }
+
+        // 2) Loop and create each item inside that one folder
+        var results: [ItemCreationResult] = []
+        self.containerFolderUid=containerUid
+        for item in generatedItems where item.isEnabled {
+            let (newUid, newRev) = await tcApi.createItem(
+                tcEndpointUrl: APIConfig.tcCreateItem(tcUrl: SettingsManager.shared.tcURL),
+                name: item.name,
+                type: item.type,
+                description: item.desc,
+                containerUid: containerUid,
+                containerClassName: containerCls,
+                containerType: containerTyp
+            )
+            let didSucceed = (newUid != nil && newRev != nil)
+            results.append(.init(itemName: item.name, success: didSucceed))
+        }
+
+        return results
     }
 }

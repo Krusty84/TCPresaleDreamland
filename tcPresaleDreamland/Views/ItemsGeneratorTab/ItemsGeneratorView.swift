@@ -34,6 +34,7 @@ struct ItemsGeneratorContent: View {
                 TextField("Domain", text: $vm.domainName)
                     .textFieldStyle(RoundedBorderTextFieldStyle())
                     .frame(width: 200)
+                    .help("Product (for example: airplane, transmitter, neutron accelerator, etc.) or industry (for example: nuclear, chemical, etc)")
 
                 HStack(spacing: 4) {
                     Text("Count:")
@@ -50,17 +51,19 @@ struct ItemsGeneratorContent: View {
                             .frame(width: 60)
                     }
                 }
+                .help("Expected number of generated items")
                 .frame(width: 140)
 
                 HStack(spacing: 4) {
-                    Text("Temp:")
+                    Text("Temperature:")
                     Stepper(value: $vm.itemsTemperature, in: 0...1, step: 0.1) {
                         Text("\(vm.itemsTemperature, specifier: "%.1f")")
                             .monospacedDigit()
                             .frame(width: 40)
                     }
                 }
-                .frame(width: 140)
+                .help("Creativity level: the higher the value, the more creative it is, but it might be far from reality")
+                .frame(width: 200)
 
                 HStack(spacing: 4) {
                     Text("Tokens:")
@@ -70,11 +73,13 @@ struct ItemsGeneratorContent: View {
                             .frame(width: 50)
                     }
                 }
+                .help("The maximum number of tokens that can be generated")
                 .frame(width: 160)
 
                 Button("Generate Items") {
                     vm.generateItems()
                 }
+                .help("Generate Items")
                 .disabled(vm.isLoading || vm.domainName.isEmpty)
             }
             .padding()
@@ -126,6 +131,7 @@ struct ItemsGeneratorContent: View {
                                 Text(type).tag(type)
                             }
                         }
+                        .help("Type of object that will be created in Teamcenter")
                         .pickerStyle(MenuPickerStyle())
                         .frame(width: 120)
                         .labelsHidden()
@@ -154,8 +160,20 @@ struct ItemsGeneratorContent: View {
                 }
             }
 
-            // PushToTCView stays below the table
-            PushToTCView()
+            PushToTCView(
+                      uid: vm.containerFolderUid,
+                      containerFolderName: vm.domainName,
+                      buttonAction: {
+                          let report = await vm.createSelectedItems()
+                          let failures = report
+                              .filter { !$0.success }
+                              .map(\.itemName)
+
+                          if !failures.isEmpty {
+                              // all good
+                          }
+                      }
+                  ).disabled(vm.generatedItems.allSatisfy { !$0.isEnabled })
         }
         .frame(minWidth: 600, minHeight: 500)
     }

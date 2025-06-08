@@ -25,13 +25,17 @@ struct MainWindow: View {
     var body: some View {
         ElegantTabsView(selection: $selectedTab) {
             TabItem(title: "Items Generator", icon: .system(name: "batteryblock.stack")) {
-                            ItemsGeneratorContent(vm: itemsGeneratorVM) // Pass it down
+                ItemsGeneratorContent(vm: itemsGeneratorVM) // Pass it down
             }
             TabItem(title: "BOM Generator", icon: .system(name: "list.bullet.indent")) {
                 BomGeneratorContent()
             }
             TabItem(title: "Req Spec Generator", icon: .system(name: "text.document")) {
                 ReqSpecGeneratorContent()
+            }
+            TabItem(title: "History", icon: .system(name: "clock"))
+            {
+                HistoryContent()
             }
             TabItem(title: "Settings", icon: .system(name: "gearshape.fill")) {
                 SettingsTabContent()
