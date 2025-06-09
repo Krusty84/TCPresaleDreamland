@@ -11,7 +11,7 @@ struct ItemsGeneratorContent: View {
     @ObservedObject var vm: ItemsGeneratorViewModel
     @State private var selectAll = false
     @State private var headerType = "" // used only for the header‐picker
-
+    
     // Helper function to create bindings
     private func binding<T>(
         for item: Item,
@@ -26,7 +26,7 @@ struct ItemsGeneratorContent: View {
             }
         )
     }
-
+    
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             // Top controls
@@ -35,7 +35,7 @@ struct ItemsGeneratorContent: View {
                     .textFieldStyle(RoundedBorderTextFieldStyle())
                     .frame(width: 200)
                     .help("Product (for example: airplane, transmitter, neutron accelerator, etc.) or industry (for example: nuclear, chemical, etc)")
-
+                
                 HStack(spacing: 4) {
                     Text("Count:")
                     Stepper(
@@ -53,7 +53,7 @@ struct ItemsGeneratorContent: View {
                 }
                 .help("Expected number of generated items")
                 .frame(width: 140)
-
+                
                 HStack(spacing: 4) {
                     Text("Temperature:")
                     Stepper(value: $vm.itemsTemperature, in: 0...1, step: 0.1) {
@@ -64,7 +64,7 @@ struct ItemsGeneratorContent: View {
                 }
                 .help("Creativity level: the higher the value, the more creative it is, but it might be far from reality")
                 .frame(width: 200)
-
+                
                 HStack(spacing: 4) {
                     Text("Tokens:")
                     Stepper(value: $vm.itemsMaxTokens, in: 100...4000, step: 100) {
@@ -75,7 +75,7 @@ struct ItemsGeneratorContent: View {
                 }
                 .help("The maximum number of tokens that can be generated")
                 .frame(width: 160)
-
+                
                 Button("Generate Items") {
                     vm.generateItems()
                 }
@@ -83,9 +83,9 @@ struct ItemsGeneratorContent: View {
                 .disabled(vm.isLoading || vm.domainName.isEmpty)
             }
             .padding()
-
+            
             Divider()
-
+            
             // Table wrapped in a ZStack so we can overlay the loading spinner
             ZStack {
                 // 1) The actual table of items
@@ -108,14 +108,14 @@ struct ItemsGeneratorContent: View {
                             }
                     }
                     .width(20)
-
+                    
                     // 2) Name column (display only)
                     TableColumn("Name") { item in
                         Text(item.name)
                             .font(.headline)
                     }
                     .width(min: 100, max: 200)
-
+                    
                     // 3) Description column (display only)
                     TableColumn("Description") { item in
                         Text(item.desc)
@@ -123,7 +123,7 @@ struct ItemsGeneratorContent: View {
                             .foregroundColor(.secondary)
                     }
                     .width(min: 100, max: 300)
-
+                    
                     // 4) Type column: picker + contextMenu on each row’s picker
                     TableColumn("Type") { item in
                         Picker("", selection: binding(for: item, keyPath: \.type)) {
@@ -146,34 +146,37 @@ struct ItemsGeneratorContent: View {
                     }
                     .width(120)
                 }
-
+                
                 // 2) If vm.isLoading is true, overlay a semi-transparent layer + spinner
                 if vm.isLoading {
                     // Semi-transparent background to dim the table
                     Color.black.opacity(0.25)
                         .edgesIgnoringSafeArea(.all)
-
+                    
                     // Centered ProgressView without a background
                     ProgressView()
                         .progressViewStyle(CircularProgressViewStyle())
                         .scaleEffect(1.5) // make it a bit larger if you like
                 }
             }
-
+            
             PushToTCView(
-                      uid: vm.containerFolderUid,
-                      containerFolderName: vm.domainName,
-                      buttonAction: {
-                          let report = await vm.createSelectedItems()
-                          let failures = report
-                              .filter { !$0.success }
-                              .map(\.itemName)
-
-                          if !failures.isEmpty {
-                              // all good
-                          }
-                      }
-                  ).disabled(vm.generatedItems.allSatisfy { !$0.isEnabled })
+                uid: vm.containerFolderUid,
+                containerFolderName: vm.domainName,
+                pushToHistoryAction: {
+                    await vm.saveGeneratedItemsToHistory()
+                },
+                pushToTCVoidAction: {
+                    let report = await vm.createSelectedItems()
+                    let failures = report
+                        .filter { !$0.success }
+                        .map(\.itemName)
+                    
+                    if !failures.isEmpty {
+                        // all good
+                    }
+                }
+            ).disabled(vm.generatedItems.allSatisfy { !$0.isEnabled })
         }
         .frame(minWidth: 600, minHeight: 500)
     }

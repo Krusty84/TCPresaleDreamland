@@ -23,12 +23,19 @@ class ItemsGeneratorViewModel: ObservableObject {
     @Published var itemsTemperature: Double
     @Published var itemsMaxTokens: Int
     @Published var itemTypes: [String] = []
-    
-    init() {
+    //
+    private let dataStorageContext: NSManagedObjectContext
+  
+    init(
+        persistenceController: NSManagedObjectContext = PersistenceControllerGeneratedItemsData.shared.container.viewContext
+    ) {
         // Initialize once from SettingsManager
         self.itemsTemperature = SettingsManager.shared.itemsTemperature
         self.itemsMaxTokens = SettingsManager.shared.itemsMaxTokens
         self.itemTypes = SettingsManager.shared.itemsListOfTypes_storage
+        //
+        self.dataStorageContext = persistenceController
+        //
         SettingsManager.shared.$itemsListOfTypes_storage
                 .sink { [weak self] newTypes in
                        self?.itemTypes = newTypes
@@ -130,7 +137,25 @@ class ItemsGeneratorViewModel: ObservableObject {
         }
     }
     
-    
+    func saveGeneratedItemsToHistory() async -> (){
+       await dataStorageContext.perform {
+             for apiItem in self.generatedItems {
+                 let stored = GeneratedItemsDataByLLM(context: self.dataStorageContext)
+                 stored.id = apiItem.id            // keep the same UUID
+                 stored.name = self.domainName
+                 stored.timestamp = Date()         // now
+                 // keep raw JSON in case you need it later:
+                 stored.rawResponse = try? JSONEncoder()
+                     .encode(apiItem)
+             }
+             
+             do {
+                 try self.dataStorageContext.save()
+             } catch {
+                 print("❌ Core Data save error:", error)
+             }
+         }
+     }
     func createSelectedItems() async -> [ItemCreationResult] {
         guard !isLoading else { return [] }
         isLoading = true

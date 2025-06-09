@@ -10,42 +10,60 @@ import SwiftUI
 struct PushToTCView: View {
     let uid: String
     let containerFolderName: String
-    let buttonAction: @Sendable () async -> Void
-
-    private var awcBase: String { SettingsManager.shared.awcURL }
-    private var isAWC: Bool { !awcBase.isEmpty }
-    private var labelText: String {
-        isAWC ? "Open in AWC:" : "Find This Folder in TC:"
+    let pushToHistoryAction: @Sendable () async -> Void
+    let pushToTCVoidAction: @Sendable () async -> Void
+    
+    // pull from your settings
+    //private var awcBase: String { SettingsManager.shared.awcURL }
+    // the fixed path before the uid
+    //private let awcPath = "/#/com.siemens.splm.clientfx.tcui.xrt.showObject?uid="
+    // build a URL only when awcBase isn’t empty
+    private var awcURL: URL? {
+        guard !SettingsManager.shared.awcURL.isEmpty else { return nil }
+        //return URL(string: awcBase + awcPath + uid)
+        return URL(string: APIConfig.awcOpenDataPath(awcUrl: SettingsManager.shared.awcURL)+uid)
     }
-    private var linkText: String {
-        isAWC ? "\(awcBase)/\(uid)" : containerFolderName
-    }
+    @State private var isHovering = false
 
     var body: some View {
         HStack {
-            // only show the label+link block if uid is non‐empty
             if !uid.isEmpty {
-                Text(labelText)
-                
-                if isAWC, let url = URL(string: linkText) {
-                    Link(linkText, destination: url)
-                        .lineLimit(1)
-                        .truncationMode(.middle)
+                if let url = awcURL {
+                    // only “Open AWC” is shown
+                    Link("Open in AWC", destination: url)
+                        .onHover { hovering in
+                            isHovering = hovering
+                            if hovering {
+                                NSCursor.pointingHand.push()
+                            } else {
+                                NSCursor.pop()
+                            }
+                        }
                 } else {
-                    Text(linkText)
+                    // fallback for TC
+                    Text("Find this folder in TC:")
+                    Text(containerFolderName)
                         .lineLimit(1)
                         .truncationMode(.middle)
                         .foregroundColor(.secondary)
                 }
             }
+            
             Spacer()
+        
+            Button("Save to History") {
+                Task { await pushToHistoryAction() }
+            }
+            .disabled(uid.isEmpty)
             Button("Push to TC") {
-                Task { await buttonAction() }
-            }.help("Send the generated items to Teamcenter")
+                Task { await pushToTCVoidAction() }
+            }
+            .disabled(uid.isEmpty)
         }
         .padding()
     }
 }
+
 
 
 
