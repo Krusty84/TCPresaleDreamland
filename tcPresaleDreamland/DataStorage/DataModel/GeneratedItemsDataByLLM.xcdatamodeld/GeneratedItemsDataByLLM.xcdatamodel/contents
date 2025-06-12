@@ -5,5 +5,11 @@
         <attribute name="name" optional="YES" attributeType="String"/>
         <attribute name="rawResponse" optional="YES" attributeType="Binary"/>
         <attribute name="timestamp" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <uniquenessConstraints>
+            <uniquenessConstraint>
+                <constraint value="id"/>
+                <constraint value="timestamp"/>
+            </uniquenessConstraint>
+        </uniquenessConstraints>
     </entity>
 </model>

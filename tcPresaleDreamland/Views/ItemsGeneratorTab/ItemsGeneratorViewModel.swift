@@ -137,25 +137,32 @@ class ItemsGeneratorViewModel: ObservableObject {
         }
     }
     
-    func saveGeneratedItemsToHistory() async -> (){
-       await dataStorageContext.perform {
-             for apiItem in self.generatedItems {
-                 let stored = GeneratedItemsDataByLLM(context: self.dataStorageContext)
-                 stored.id = apiItem.id            // keep the same UUID
-                 stored.name = self.domainName
-                 stored.timestamp = Date()         // now
-                 // keep raw JSON in case you need it later:
-                 stored.rawResponse = try? JSONEncoder()
-                     .encode(apiItem)
-             }
-             
-             do {
-                 try self.dataStorageContext.save()
-             } catch {
-                 print("❌ Core Data save error:", error)
-             }
-         }
-     }
+    func saveGeneratedItemsToHistory() async {
+        await dataStorageContext.perform {
+            // 1. Create one history record
+            let record = GeneratedItemsDataByLLM(context: self.dataStorageContext)
+            record.id = UUID()                   // new unique ID for this batch
+            record.name = self.domainName  // or whatever you call that field
+            record.timestamp = Date()
+
+            // 2. Encode the whole items array
+            if let data = try? JSONEncoder().encode(self.generatedItems) {
+                record.rawResponse = data
+            } else {
+                print("❌ Failed to JSON-encode generatedItems")
+            }
+
+            // 3. Save once
+            do {
+                try self.dataStorageContext.save()
+            } catch {
+                print("❌ Core Data save error:", error)
+            }
+        }
+    }
+
+    
+    
     func createSelectedItems() async -> [ItemCreationResult] {
         guard !isLoading else { return [] }
         isLoading = true

@@ -10,96 +10,146 @@ import CoreData
 
 struct HistoryContent: View {
     @StateObject private var vm = HistoryViewModel()
-    @State private var selectedItem: GeneratedItemsDataByLLM.ID?
+    @ObservedObject var vmItemsGeneratorViewModel: ItemsGeneratorViewModel
+    @State private var selectedItemsHistoryRow: GeneratedItemsDataByLLM.ID? = nil
+   
+    @State private var itemsExpanded = true
+    @State private var bomsExpanded = false
+    @State private var specsExpanded = false
     
-    init () {
-        _vm = StateObject(wrappedValue: HistoryViewModel())
-    }
+    @FocusState private var itemsTableIsFocused: Bool
     
     var body: some View {
-        VStack(spacing: 0) {
-            ScrollView {
-                VStack(spacing: 16) {
-                    DisclosureGroup(
-                                   isExpanded: $vm.isItemsHistorySectionExpanded
-                               ) {
-                                   Table(vm.itemsHistory, selection: $selectedItem) {
-                                       // Name column
-                                       TableColumn("Name") { item in
-                                           Text(item.name!)            // name is non-optional on StoredItem
-                                                               }
-                                       // Timestamp column
-                                       TableColumn("Date") { item in
-                                           Text(item.timestamp!, formatter: dateFormatter)
-                                                               }
-                                   }
-                                   .frame(minHeight: 200)
-                               } label: {
-                                   SectionHeader(
-                                       title: "Items Generated History",
-                                       systemImage: "list.bullet",
-                                       isExpanded: vm.isItemsHistorySectionExpanded
-                                   )
-                               }
-
-                    // MARK: BOM's Generated History
-                    DisclosureGroup(
-                        isExpanded: $vm.isBOMsHistorySectionExpanded
-                    ) {
-                        VStack(alignment: .leading, spacing: 8) {
-                            // TODO: ForEach(vm.bomsHistory) { … }
-                            Text("Coming soon.")
-                                .foregroundColor(.secondary)
-                        }
-                        .padding(12)
-                        .background(Color(.windowBackgroundColor))
-                        .cornerRadius(8)
-                    } label: {
-                        SectionHeader(
-                            title: "BOM's Generated History",
-                            systemImage: "list.bullet",
-                            isExpanded: vm.isBOMsHistorySectionExpanded
-                        )
-                    }
-
-                    // MARK: Requirement Specs Generated History
-                    DisclosureGroup(
-                        isExpanded: $vm.isReqSpecHistorySectionExpanded
-                    ) {
-                        VStack(alignment: .leading, spacing: 8) {
-                            // TODO: ForEach(vm.reqSpecsHistory) { … }
-                            Text("Coming soon.")
-                                .foregroundColor(.secondary)
-                        }
-                        .padding(12)
-                        .background(Color(.windowBackgroundColor))
-                        .cornerRadius(8)
-                    } label: {
-                        SectionHeader(
-                            title: "Requirement Specifications Generated History",
-                            systemImage: "list.bullet",
-                            isExpanded: vm.isReqSpecHistorySectionExpanded
-                        )
-                    }
-                }
-                .animation(.default, value: vm.isItemsHistorySectionExpanded)
-                .animation(.default, value: vm.isBOMsHistorySectionExpanded)
-                .animation(.default, value: vm.isReqSpecHistorySectionExpanded)
-                .padding(.vertical, 8)
-            }
+        VStack(spacing: 20) {
+            itemsHistorySection
+            bomsHistorySection.disabled(true)
+            specsHistorySection.disabled(true)
+            Spacer()
         }
         .padding(20)
+        .environmentObject(vmItemsGeneratorViewModel)
     }
 
-    // DateFormatter for consistency
-    private var dateFormatter: DateFormatter {
-        let f = DateFormatter()
-        f.dateStyle = .short
-        f.timeStyle = .short
-        return f
+    // MARK: Items Generated History
+
+    private var itemsHistorySection: some View {
+        DisclosureGroup(
+            isExpanded: $itemsExpanded,
+            content: {
+                VStack(spacing: 16) {
+                   itemsTable
+                   itemsButtons
+                }
+                .padding(12)
+                .background(Color(.windowBackgroundColor))
+                .cornerRadius(8)
+            },
+            label: {
+                SectionHeader(
+                    title: "Items Generated History",
+                    systemImage: "list.bullet",
+                    isExpanded: itemsExpanded
+                )
+            }
+        )
     }
 
-    // MARK: Section Header
+    // 1) break out the Table into its own var
+    private var itemsTable: some View {
+        Table(vm.itemsHistory, selection: $selectedItemsHistoryRow) {
+            TableColumn("Name") { row in
+                Text(row.name ?? "–")
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            TableColumn("Date") { row in
+                if let date = row.timestamp {
+                    Text(date, formatter: vm.dateFormatter)
+                } else {
+                    Text("N/A")
+                }
+            }
+        }
+        .frame(minHeight: 200)
+        .tableStyle(.inset(alternatesRowBackgrounds: true))
+        .alternatingRowBackgrounds(.enabled)
+        .scrollContentBackground(.hidden)
+        .accentColor(Color(nsColor: .selectedControlColor))
+        .clipShape(RoundedRectangle(cornerRadius: 4))
+        .focused($itemsTableIsFocused)
+        .onAppear {
+            DispatchQueue.main.async {
+                itemsTableIsFocused = true
+            }
+        }
+    }
+
+    private var itemsButtons: some View {
+        HStack {
+            Button("Restore") {
+                if let selectedID = selectedItemsHistoryRow {
+                    vm.restore(selectedRowId: [selectedID], itemsGeneratorViewModel: vmItemsGeneratorViewModel)
+                }
+            }
+            .disabled(selectedItemsHistoryRow == nil)
+            Spacer()
+            Button("Delete") {
+                if let selectedID = selectedItemsHistoryRow {
+                    vm.delete(selectedRowId: [selectedID])
+                }
+            }.disabled(selectedItemsHistoryRow == nil)
+            .foregroundColor(.red)
+        }
+        .padding(.top, 8)
+    }
+
+    // MARK: BOM Generated History
+
+    private var bomsHistorySection: some View {
+        DisclosureGroup(
+            isExpanded: $bomsExpanded,
+            content: {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Coming soon.")
+                        .foregroundColor(.secondary)
+                }
+                .padding(12)
+                .background(Color(.windowBackgroundColor))
+                .cornerRadius(8)
+            },
+            label: {
+                SectionHeader(
+                    title: "BOM's Generated History",
+                    systemImage: "list.bullet",
+                    isExpanded: bomsExpanded
+                )
+            }
+        )
+    }
+  
+    // MARK: Req Spec Generated History
+    
+    private var specsHistorySection: some View {
+        DisclosureGroup(
+            isExpanded: $specsExpanded,
+            content: {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Coming soon.")
+                        .foregroundColor(.secondary)
+                }
+                .padding(12)
+                .background(Color(.windowBackgroundColor))
+                .cornerRadius(8)
+            },
+            label: {
+                SectionHeader(
+                    title: "Requirement Specs Generated History",
+                    systemImage: "list.bullet",
+                    isExpanded: specsExpanded
+                )
+            }
+        )
+    }
+
     struct SectionHeader: View {
         let title: String
         let systemImage: String

@@ -25,7 +25,7 @@ struct MainWindow: View {
     var body: some View {
         ElegantTabsView(selection: $selectedTab) {
             TabItem(title: "Items Generator", icon: .system(name: "batteryblock.stack")) {
-                ItemsGeneratorContent(vm: itemsGeneratorVM) // Pass it down
+                ItemsGeneratorContent(vm: itemsGeneratorVM)
             }
             TabItem(title: "BOM Generator", icon: .system(name: "list.bullet.indent")) {
                 BomGeneratorContent()
@@ -35,7 +35,7 @@ struct MainWindow: View {
             }
             TabItem(title: "History", icon: .system(name: "clock"))
             {
-                HistoryContent()
+                HistoryContent(vmItemsGeneratorViewModel: itemsGeneratorVM)
             }
             TabItem(title: "Settings", icon: .system(name: "gearshape.fill")) {
                 SettingsTabContent()
@@ -47,6 +47,6 @@ struct MainWindow: View {
     }
 }
 
-#Preview {
-    MainWindow()
-}
+//#Preview {
+//    MainWindow()
+//}

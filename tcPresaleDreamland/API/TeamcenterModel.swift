@@ -7,7 +7,7 @@
 
 import Foundation
 
-// MARK: – Codable models for the login response
+// MARK: Codable models for the login response
 
 /// Matches the "serverInfo" object in the login response
 struct ServerInfo: Codable {
@@ -103,7 +103,7 @@ struct SessionInfoResponse: Codable {
     }
 }
 
-// MARK: – Codable models for expandFolder response
+// MARK: Codable models for expandFolder response
 
 /// 1) Basic folder info (used under "fstlvlFolders" and under "modelObjects")
 ///    Make objectID optional, because "inputFolder" does not include it.
@@ -143,7 +143,7 @@ struct ExpandFolderResponse: Codable {
     }
 }
 
-// MARK: – Codable models for getProperties response
+// MARK: Codable models for getProperties response
 
 /// Each property under "props" has dbValues and uiValues
 struct PropertyValue: Codable {
@@ -173,7 +173,7 @@ struct GetPropertiesResponse: Codable {
     }
 }
 
-// MARK: – Codable models for createItem (only what we need)
+// MARK: Codable models for createItem (only what we need)
 
 /// We only need the nested item and itemRev objects
 struct CreateItemsOutput: Codable {
@@ -193,7 +193,7 @@ struct CreateItemsResponse: Codable {
     }
 }
 
-// MARK: – Codable models for createFolder response
+// MARK: Codable models for createFolder response
 
 /// We only need the nested “folder” object
 struct CreateFoldersOutput: Codable {

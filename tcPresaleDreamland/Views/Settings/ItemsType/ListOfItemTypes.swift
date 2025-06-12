@@ -32,12 +32,12 @@ struct ListEditorView: View {
                     .textFieldStyle(RoundedBorderTextFieldStyle())
                     .frame(minWidth: 200)
 
-                Button(action: addItem) {
+                Button(action: addNewType) {
                     Image(systemName: "plus")
                 }
                // .help("Add the text above to the list")
 
-                Button(action: deleteItem) {
+                Button(action: deleteType) {
                     Image(systemName: "minus")
                 }
                 .disabled(selectedItem == nil || selectedItem == "Item")
@@ -48,7 +48,7 @@ struct ListEditorView: View {
         .padding(8)
     }
 
-    private func addItem() {
+    private func addNewType() {
         let trimmed = newItemName.trimmingCharacters(in: .whitespaces)
         guard !trimmed.isEmpty else { return }
         items.append(trimmed)
@@ -56,7 +56,7 @@ struct ListEditorView: View {
         selectedItem = nil
     }
 
-    private func deleteItem() {
+    private func deleteType() {
         guard let toDelete = selectedItem,
               let index = items.firstIndex(of: toDelete)
         else { return }

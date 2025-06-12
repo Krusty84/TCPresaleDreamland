@@ -34,7 +34,7 @@ struct JSONTreeView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
     
-    // MARK: - Rendering Methods
+    // MARK: Rendering Methods
     
     @ViewBuilder
     private func renderAny(value: Any, key: String, path: String) -> some View {
@@ -139,7 +139,7 @@ struct JSONTreeView: View {
         .padding(.vertical, 2)
     }
     
-    // MARK: - Helper Methods
+    // MARK: Helper Methods
     
     private func toggleNode(path: String) {
         if expandedNodes.contains(path) {
@@ -163,7 +163,7 @@ struct JSONTreeView: View {
     }
 }
 
-// MARK: - Convenience Initializers
+// MARK: Convenience Initializers
 
 extension JSONTreeView {
     init<T: Encodable>(encodable: T) {

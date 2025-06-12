@@ -23,6 +23,7 @@ struct PersistenceControllerGeneratedItemsData {
                 fatalError("Core Data store failed: \(error)")
             }
         }
+        container.viewContext.mergePolicy = NSMergeByPropertyObjectTrumpMergePolicy
         container.viewContext.automaticallyMergesChangesFromParent = true
     }
 }

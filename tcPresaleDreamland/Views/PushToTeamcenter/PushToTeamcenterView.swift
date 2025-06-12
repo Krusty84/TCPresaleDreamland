@@ -54,11 +54,9 @@ struct PushToTCView: View {
             Button("Save to History") {
                 Task { await pushToHistoryAction() }
             }
-            .disabled(uid.isEmpty)
             Button("Push to TC") {
                 Task { await pushToTCVoidAction() }
             }
-            .disabled(uid.isEmpty)
         }
         .padding()
     }
