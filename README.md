@@ -5,16 +5,16 @@
 **tcPresaleDreamland** is your best friend when you need to impress stakeholders without showing the painful truth of real Teamcenter data.
 It's a lightweight, one-click demo data generator tailored for **Presales Engineers**, **Solution Architects**, and other demo warriors who don't have time for real integrations.
 
-> 🧙‍♂️ Create BOMs, Requirement Specifications, Items in seconds – no actual product knowledge required!
+> 🧙‍♂️ Create Items, BOM's, Requirement Specifications in seconds – no actual product knowledge required!
 
 --
 
 ## 🎯 Features
 
 * 🔧 Auto-generate **realistic-looking** Teamcenter objects
-* 🧱 Supports **BOMs**, **Items**
+* 🧱 Supports **Items**, **BOM's**, **Requirement Specifications**
 
-  > *"This is just sample data for illustration purposes only."* 😅
+  > *"This is just sample data for illustration purposes only."* ;)
 
 --
 
@@ -29,4 +29,6 @@ It's a lightweight, one-click demo data generator tailored for **Presales Engine
 
 > This tool generates **mock data only** and is not intended for use in production systems.
 > Any resemblance to real users, products, or workflows is purely coincidental (and lucky).
+
+--
 
