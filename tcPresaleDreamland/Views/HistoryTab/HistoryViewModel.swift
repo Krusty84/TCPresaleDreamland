@@ -54,7 +54,6 @@ class HistoryViewModel: ObservableObject {
                 
           where selectedRowId.contains(batch.id!)
         {
-            print(batch.name)
             itemVM.domainName = batch.name!
             if let data = batch.rawResponse,
                let items = try? JSONDecoder()

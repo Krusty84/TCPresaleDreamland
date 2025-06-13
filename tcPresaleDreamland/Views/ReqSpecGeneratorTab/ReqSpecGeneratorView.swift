@@ -20,9 +20,9 @@ struct ReqSpecGeneratorContent: View {
 }
 
 #if DEBUG
-struct ReqSpecGeneratorContent_Previews: PreviewProvider {
-    static var previews: some View {
-        ReqSpecGeneratorContent()
-    }
-}
+//struct ReqSpecGeneratorContent_Previews: PreviewProvider {
+//    static var previews: some View {
+//        ReqSpecGeneratorContent()
+//    }
+//}
 #endif

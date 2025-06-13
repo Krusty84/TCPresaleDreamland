@@ -48,14 +48,14 @@ struct BOMData: Codable {
 }
 
 struct Component: Codable, Identifiable {
-    let id = UUID()
+    var id = UUID()
     let name: String
     let quantity: Int
     let subComponents: [SubComponent]?
 }
 
 struct SubComponent: Codable, Identifiable {
-    let id = UUID()
+    var id = UUID()
     let name: String
     let quantity: Double
 }

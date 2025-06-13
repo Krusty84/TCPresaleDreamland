@@ -20,9 +20,9 @@ struct BomGeneratorContent: View {
 }
 
 #if DEBUG
-struct BomGeneratorContent_Previews: PreviewProvider {
-    static var previews: some View {
-        BomGeneratorContent()
-    }
-}
+//struct BomGeneratorContent_Previews: PreviewProvider {
+//    static var previews: some View {
+//        BomGeneratorContent()
+//    }
+//}
 #endif

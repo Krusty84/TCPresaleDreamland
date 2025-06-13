@@ -27,12 +27,12 @@ struct MainWindow: View {
             TabItem(title: "Items Generator", icon: .system(name: "batteryblock.stack")) {
                 ItemsGeneratorContent(vm: itemsGeneratorVM)
             }
-            TabItem(title: "BOM Generator", icon: .system(name: "list.bullet.indent")) {
-                BomGeneratorContent()
-            }
-            TabItem(title: "Req Spec Generator", icon: .system(name: "text.document")) {
-                ReqSpecGeneratorContent()
-            }
+//            TabItem(title: "BOM Generator", icon: .system(name: "list.bullet.indent")) {
+//                BomGeneratorContent()
+//            }
+//            TabItem(title: "Req Spec Generator", icon: .system(name: "text.document")) {
+//                ReqSpecGeneratorContent()
+//            }
             TabItem(title: "History", icon: .system(name: "clock"))
             {
                 HistoryContent(vmItemsGeneratorViewModel: itemsGeneratorVM)

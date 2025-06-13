@@ -148,7 +148,10 @@ public struct HomeFolderContent: View {
         }
         .padding()
         .onAppear(perform: validateSelections)
-        .onChange(of: folders) { _ in validateSelections() }
+        .onChange(of: folders) {
+              // no parameters → folders has already updated
+              validateSelections()
+          }
     }
     
     // Builds each VStack + Picker
@@ -170,7 +173,10 @@ public struct HomeFolderContent: View {
                 }
             }
             .pickerStyle(PopUpButtonPickerStyle())
-            .onChange(of: selection.wrappedValue, perform: onChange)
+            .onChange(of: selection.wrappedValue) { oldValue, newValue in
+                // call your handler with the fresh newValue
+                onChange(newValue)
+            }
         }
         .frame(maxWidth: .infinity)
     }

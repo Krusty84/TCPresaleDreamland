@@ -179,11 +179,11 @@ class ItemsGeneratorViewModel: ObservableObject {
     
     func createSelectedItems() async -> [ItemCreationResult] {
         // 0) Login first
-        guard let session = await tcApi.tcLogin(
+        guard (await tcApi.tcLogin(
             tcEndpointUrl: APIConfig.tcLoginUrl(tcUrl: SettingsManager.shared.tcURL),
             userName: SettingsManager.shared.tcUsername,
             userPassword: SettingsManager.shared.tcPassword
-        ) else {
+        )) != nil else {
             print("Login failed. Cannot create items.")
             // Mark all as failed
             return generatedItems

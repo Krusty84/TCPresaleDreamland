@@ -8,18 +8,5 @@
 import Foundation
 
 class ReqSpecGeneratorViewModel: ObservableObject {
-    @Published var title: String = "Hello, SwiftUI!"
 
-    func changeTitle() {
-        title = "Title changed!"
-        
-        SettingsManager.shared.bomTemperature
-        SettingsManager.shared.bomMaxTokens
-        
-        SettingsManager.shared.reqSpecTemperature
-        SettingsManager.shared.reqSpecMaxTokens
-        
-        SettingsManager.shared.itemsTemperature
-        SettingsManager.shared.itemsMaxTokens
-    }
 }
