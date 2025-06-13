@@ -13,6 +13,7 @@ struct APIConfig {
     static let deepSeekChatCcompletions = "https://api.deepseek.com/v1/chat/completions"
     static let deepSeekPlatform = "https://platform.deepseek.com"
     //
+    //http://BlahLbahlBlah:3000/#/com.siemens.splm.clientfx.tcui.xrt.showObject?uid=uid
     static func awcOpenDataPath(awcUrl: String) -> String {
         return "\(awcUrl)/#/com.siemens.splm.clientfx.tcui.xrt.showObject?uid="
     }
@@ -35,5 +36,5 @@ struct APIConfig {
         return "\(tcUrl)/JsonRestServices/Core-2006-03-DataManagement/createFolders"
     }
     
-    //http://awc:3000/#/com.siemens.splm.clientfx.tcui.xrt.showObject?uid=uid
+
 }

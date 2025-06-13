@@ -62,6 +62,10 @@ class SettingsManager {
       }
     
     // Default prompts
+    let defaultItemsPrompt = "Generate item entries from the provided list."
+    let defaultItemsTemperature = 0.7
+    let defaultItemsMaxTokens = 1000
+    //
     let defaultBOMPrompt = """
     Generate a Bill of Materials (BOM) for the specified product: [PRODUCT_NAME]. Return the BOM as a JSON object with the following structure: 
     {
@@ -85,11 +89,7 @@ class SettingsManager {
     let defaultReqSpecPrompt = "Generate a requirements specification based on the product details."
     let defaultReqSpecTemperature = 0.7
     let defaultReqSpecMaxTokens = 1000
-    
-    let defaultItemsPrompt = "Generate item entries from the provided list."
-    let defaultItemsTemperature = 0.7
-    let defaultItemsMaxTokens = 1000
-    
+
     var appLoggingEnabled: Bool {
         get { defaults.bool(forKey: appLoggingEnabledKey) }
         set { defaults.set(newValue, forKey: appLoggingEnabledKey) }

@@ -13,20 +13,16 @@ struct PushToTCView: View {
     let pushToHistoryAction: @Sendable () async -> Void
     let pushToTCVoidAction: @Sendable () async -> Void
     
-    // pull from your settings
-    //private var awcBase: String { SettingsManager.shared.awcURL }
-    // the fixed path before the uid
-    //private let awcPath = "/#/com.siemens.splm.clientfx.tcui.xrt.showObject?uid="
     // build a URL only when awcBase isn’t empty
     private var awcURL: URL? {
         guard !SettingsManager.shared.awcURL.isEmpty else { return nil }
-        //return URL(string: awcBase + awcPath + uid)
         return URL(string: APIConfig.awcOpenDataPath(awcUrl: SettingsManager.shared.awcURL)+uid)
     }
     @State private var isHovering = false
 
     var body: some View {
         HStack {
+            Text("Status:")
             if !uid.isEmpty {
                 if let url = awcURL {
                     // only “Open AWC” is shown
@@ -41,11 +37,7 @@ struct PushToTCView: View {
                         }
                 } else {
                     // fallback for TC
-                    Text("Find this folder in TC:")
-                    Text(containerFolderName)
-                        .lineLimit(1)
-                        .truncationMode(.middle)
-                        .foregroundColor(.secondary)
+                    Text("Find \"\(containerFolderName)\" folder in TC")
                 }
             }
             

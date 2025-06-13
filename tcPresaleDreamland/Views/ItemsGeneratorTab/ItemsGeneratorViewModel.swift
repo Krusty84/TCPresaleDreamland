@@ -13,6 +13,7 @@ class ItemsGeneratorViewModel: ObservableObject {
     private var cancellables = Set<AnyCancellable>()
     private let tcApi = TeamcenterAPIService.shared
     private let deepSeekApi = DeepSeekAPIService.shared
+    private let llmHelpser = LLMHelpers.shared
     @Published var domainName: String = ""
     @Published var containerFolderUid: String = ""
     @Published var count: String = ""
@@ -52,7 +53,7 @@ class ItemsGeneratorViewModel: ObservableObject {
             
             do {
                 
-                let prompt = """
+                let promptZZZ = """
                 You are a domain expert who converts industry-specific items into perfect JSON format. 
                 
                 EXAMPLE INPUT: 
@@ -74,7 +75,7 @@ class ItemsGeneratorViewModel: ObservableObject {
                 }
                 
                 ACTUAL TASK:
-                Generate a list of \(count) real-world items related to the domain "\(domainName)" (e.g., Automotive, Aerospace, Medical Devices, etc.). Follow these rules:
+                Generate a list of \(count) real-world items related to the domain "\(domainName)" (e.g., Automotive, Aerospace, Medical Devices, Electronics, etc.). Follow these rules:
                 1. Only use actual industry-standard terms
                 2. Descriptions must be 5-10 words
                 3. Maintain technical accuracy
@@ -87,7 +88,7 @@ class ItemsGeneratorViewModel: ObservableObject {
                 // Call the DeepSeek API
                 let response = try await deepSeekApi.chatLLM(
                     apiKey: SettingsManager.shared.apiKey,
-                    prompt: prompt,
+                    prompt: llmHelpser.generateItemsPrompt(domainName: domainName, count: count),
                     temperature:itemsTemperature,
                     max_tokens: itemsMaxTokens
                 )

@@ -31,7 +31,7 @@ struct SettingsTabContent: View {
             Group {
                 switch selectedTab {
                     case 0: generalSettingsTab
-                    case 1: llmPromptsTab
+                    case 1: llmPromptsTab.disabled(true)
                     case 2: teamcenterTab
                     default: EmptyView()
                 }
@@ -95,6 +95,62 @@ struct SettingsTabContent: View {
     private var llmPromptsTab: some View {
         ScrollView {
             VStack(spacing: 16) {
+                // Items Generation Section
+                DisclosureGroup(isExpanded: $vm.isItemsSectionExpanded) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        TextEditor(text: $vm.itemsPrompt)
+                            .font(.body)
+                            .frame(minHeight: 80)
+                            .padding(4)
+                            .background(Color(.textBackgroundColor))
+                            .cornerRadius(6)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 6)
+                                    .stroke(Color(.separatorColor), lineWidth: 1)
+                            )
+                            .help("The prompt being used")
+                        
+                        HStack(spacing: 20) {
+                            HStack {
+                                Slider(value: $vm.itemsTemperature, in: 0...1, step: 0.1)
+                                Text("\(vm.itemsTemperature, specifier: "%.1f")")
+                                    .monospacedDigit()
+                                    .frame(width: 30, alignment: .trailing)
+                            }
+                            .help("Creativity level: the higher the value, the more creative it is, but it might be far from reality")
+                            
+                            HStack {
+                                Text("Max Tokens")
+                                Stepper(value: $vm.itemsMaxTokens, in: 100...4000, step: 100) {
+                                    Text("\(vm.itemsMaxTokens)")
+                                        .monospacedDigit()
+                                        .frame(width: 45, alignment: .trailing)
+                                }
+                            }
+                            .help("The maximum number of tokens that can be generated")
+                        }
+                        .padding(.vertical, 4)
+                        
+                        HStack {
+                            Spacer()
+                            Button(action: vm.reseItemsToDefault) {
+                                Text("Reset Defaults")
+                                    .frame(minWidth: 100)
+                            }
+                            .controlSize(.regular)
+                            .help("Reset your changes")
+                        }
+                        .padding(.top, 8)
+                    }
+                    .padding(12)
+                    .background(Color(.windowBackgroundColor))
+                    .cornerRadius(8)
+                } label: {
+                    SectionHeader(title: "Items Generation",
+                                  systemImage: "cube.box.fill",
+                                  isExpanded: vm.isItemsSectionExpanded)
+                }
+                
                 // BOM Generation Section
                 DisclosureGroup(isExpanded: $vm.isBOMSectionExpanded) {
                     VStack(alignment: .leading, spacing: 8) {
@@ -205,63 +261,6 @@ struct SettingsTabContent: View {
                                   systemImage: "doc.text.fill",
                                   isExpanded: vm.isReqSpecSectionExpanded)
                 }
-                
-                // Items Generation Section
-                DisclosureGroup(isExpanded: $vm.isItemsSectionExpanded) {
-                    VStack(alignment: .leading, spacing: 8) {
-                        TextEditor(text: $vm.itemsPrompt)
-                            .font(.body)
-                            .frame(minHeight: 80)
-                            .padding(4)
-                            .background(Color(.textBackgroundColor))
-                            .cornerRadius(6)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 6)
-                                    .stroke(Color(.separatorColor), lineWidth: 1)
-                            )
-                            .help("The prompt being used")
-                        
-                        HStack(spacing: 20) {
-                            HStack {
-                                Slider(value: $vm.itemsTemperature, in: 0...1, step: 0.1)
-                                Text("\(vm.itemsTemperature, specifier: "%.1f")")
-                                    .monospacedDigit()
-                                    .frame(width: 30, alignment: .trailing)
-                            }
-                            .help("Creativity level: the higher the value, the more creative it is, but it might be far from reality")
-                            
-                            HStack {
-                                Text("Max Tokens")
-                                Stepper(value: $vm.itemsMaxTokens, in: 100...4000, step: 100) {
-                                    Text("\(vm.itemsMaxTokens)")
-                                        .monospacedDigit()
-                                        .frame(width: 45, alignment: .trailing)
-                                }
-                            }
-                            .help("The maximum number of tokens that can be generated")
-                        }
-                        .padding(.vertical, 4)
-                        
-                        HStack {
-                            Spacer()
-                            Button(action: vm.reseItemsToDefault) {
-                                Text("Reset Defaults")
-                                    .frame(minWidth: 100)
-                            }
-                            .controlSize(.regular)
-                            .help("Reset your changes")
-                        }
-                        .padding(.top, 8)
-                    }
-                    .padding(12)
-                    .background(Color(.windowBackgroundColor))
-                    .cornerRadius(8)
-                } label: {
-                    SectionHeader(title: "Items Generation",
-                                  systemImage: "cube.box.fill",
-                                  isExpanded: vm.isItemsSectionExpanded)
-                }
-                
             }
             .padding(16)
         }
