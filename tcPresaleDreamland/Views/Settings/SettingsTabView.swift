@@ -63,7 +63,7 @@ struct SettingsTabContent: View {
                         TextField("API Key", text: $vm.apiKey)
                             .textFieldStyle(RoundedBorderTextFieldStyle())
                         apiKeyStatusIndicator
-                        Button("Verify", action: vm.verifyAPIKey)
+                        Button("Verify", action: vm.verifyDeepSeekAPIKey)
                             .frame(minWidth: 60)
                             .disabled(vm.apiKey.isEmpty)
                             .help("Check API Key")
@@ -273,7 +273,6 @@ struct SettingsTabContent: View {
             VStack(spacing: 20) {
                 //Section {
                 DisclosureGroup(isExpanded: $vm.isTeamcenterGeneral) {
-                    
                     VStack(alignment: .leading, spacing: 10) {
                         TextField("http(s)://ip-or-name-tc-webtier:port/webtier-name-typically tc",text: $vm.tcURL)
                             .textFieldStyle(RoundedBorderTextFieldStyle())
@@ -338,6 +337,7 @@ struct SettingsTabContent: View {
                         isExpanded: vm.isTeamcenterGeneral
                     )
                 }
+                //
                 DisclosureGroup(isExpanded: $vm.isTeamcenterDataTargetFolder) {
                     HomeFolderContent(rawData: vm.homeFolderContent)
                 } label: {
@@ -348,35 +348,32 @@ struct SettingsTabContent: View {
                     )
                 }
                 .disabled(!vm.tcLoginValid)
-                
+                //
                 DisclosureGroup(isExpanded: $vm.isTeamcenterObjectType) {
                     HStack(spacing: 0) {
                         // Column A
                         VStack(spacing: 4) {
-                            Text("Items")
-                                .font(.caption)
+                            Text("Items").font(.headline)
                             // .foregroundColor(.secondary)
                             ListEditorView(items: SettingsManager.shared.itemsListOfTypes)
-                                .frame(maxWidth: .infinity, maxHeight: 10)
+                                .frame(maxWidth: .infinity)
                         }
                         
                         // Column B
                         VStack(spacing: 4) {
-                            Text("BOM's")
-                                .font(.caption)
+                            Text("BOM's").font(.headline)
                             // .foregroundColor(.secondary)
                             ListEditorView(items: SettingsManager.shared.itemsListOfTypes)
-                                .frame(maxWidth: .infinity, maxHeight: 10)
-                        }
+                                .frame(maxWidth: .infinity)
+                        }.disabled(true)
                         
                         // Column C
                         VStack(spacing: 4) {
-                            Text("Requirements")
-                                .font(.caption)
+                            Text("Requirements").font(.headline)
                             // .foregroundColor(.secondary)
                             ListEditorView(items: SettingsManager.shared.itemsListOfTypes)
-                                .frame(maxWidth: .infinity, maxHeight: 10)
-                        }
+                                .frame(maxWidth: .infinity)
+                        }.disabled(true)
                     }
                     .frame(height: 300) // keep same height as before
                 } label: {

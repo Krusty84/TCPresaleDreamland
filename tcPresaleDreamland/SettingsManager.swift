@@ -63,7 +63,7 @@ class SettingsManager {
     
     // Default prompts
     let defaultItemsPrompt = "Generate item entries from the provided list."
-    let defaultItemsTemperature = 0.7
+    let defaultItemsTemperature = 0.5
     let defaultItemsMaxTokens = 1000
     //
     let defaultBOMPrompt = """
@@ -83,11 +83,11 @@ class SettingsManager {
     }
     Ensure all components necessary for the assembly of [PRODUCT_NAME] are listed comprehensively.
     """
-    let defaultBomTemperature = 0.7
+    let defaultBomTemperature = 0.5
     let defaultBomMaxTokens = 1000
 
     let defaultReqSpecPrompt = "Generate a requirements specification based on the product details."
-    let defaultReqSpecTemperature = 0.7
+    let defaultReqSpecTemperature = 0.5
     let defaultReqSpecMaxTokens = 1000
 
     var appLoggingEnabled: Bool {

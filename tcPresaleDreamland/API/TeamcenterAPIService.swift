@@ -21,18 +21,15 @@ class TeamcenterAPIService: ObservableObject {
         userName: String,
         userPassword: String
     ) async -> String? {
-        // 1) Build the URL
+        // 1. Build URL
         guard let url = URL(string: tcEndpointUrl) else {
-            print("Invalid URL string:", tcEndpointUrl)
+            print("Invalid URL:", tcEndpointUrl)
             return nil
         }
         
-        // 2) Prepare JSON payload exactly as Teamcenter expects
+        // 2. Build payload exactly as Teamcenter needs
         let payload: [String: Any] = [
-            "header": [
-                "state": [:],
-                "policy": [:]
-            ],
+            "header": ["state": [:], "policy": [:]],
             "body": [
                 "credentials": [
                     "user": userName,
@@ -45,95 +42,86 @@ class TeamcenterAPIService: ObservableObject {
             ]
         ]
         
-        // 3) Serialize payload to Data
+        // 3. JSON-encode the payload
         let jsonData: Data
         do {
-            jsonData = try JSONSerialization.data(
-                withJSONObject: payload,
-                options: []
-            )
+            jsonData = try JSONSerialization.data(withJSONObject: payload)
         } catch {
-            print("Failed to serialize JSON payload:", error)
+            print("Could not encode JSON:", error)
             return nil
         }
         
-        // 4) Build URLRequest
+        // 4. Build the request
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = jsonData
         
         do {
-            // 5) Perform the network call
+            // 5. Send it
             let (data, response) = try await URLSession.shared.data(for: request)
-            guard let httpResponse = response as? HTTPURLResponse else {
-                print("No HTTP response (not an HTTPURLResponse).")
+            guard let http = response as? HTTPURLResponse else {
+                print("Not an HTTP response")
                 return nil
             }
             
-            // 6) Decode the JSON response body via Codable
-            let decoder = JSONDecoder()
-            do {
-                let loginResp = try decoder.decode(LoginResponse.self, from: data)
-                // (We could inspect loginResp.qName or loginResp.serverInfo here
-                //  if we wanted to verify a successful login.)
-                // For now, we just ignore them because our goal is the JSESSIONID.
-            } catch {
-                print("Failed to decode login response JSON:", error)
-                // Even if decoding fails, we might still get a Set-Cookie header below.
-                // So we do not return nil here—let’s still try to parse Set-Cookie.
+            // 6. Parse JSON body into a Dictionary
+            guard
+                let jsonObj = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+                let qName = jsonObj[".QName"] as? String
+            else {
+                print("Bad JSON or missing .QName")
+                return nil
             }
             
-            // 7) Try to parse JSESSIONID from the Set-Cookie header
-            if let setCookieString = httpResponse.value(forHTTPHeaderField: "Set-Cookie") {
-                let pattern = "JSESSIONID=([^;]+)"
-                if let regex = try? NSRegularExpression(pattern: pattern, options: []) {
-                    let nsRange = NSRange(
-                        setCookieString.startIndex ..< setCookieString.endIndex,
-                        in: setCookieString
-                    )
-                    if let match = regex.firstMatch(
-                        in: setCookieString,
-                        options: [],
-                        range: nsRange
-                    ), let range = Range(match.range(at: 1), in: setCookieString) {
-                        let newSessionId = String(setCookieString[range])
-                        // Store it and return
-                        DispatchQueue.main.async {
-                            self.jsessionId = newSessionId
-                        }
-                        print("Logged in successfully. JSESSIONID:", newSessionId)
-                        return newSessionId
-                    } else {
-                        print("Could not parse JSESSIONID from Set-Cookie header.")
-                        return nil
+            // 7. Check if it’s the login response or an exception
+            if qName.contains("Session.LoginResponse") {
+                // success
+            } else {
+                // failure: show the message if any
+                if let msg = jsonObj["message"] as? String {
+                    print("Login error from server:", msg)
+                } else {
+                    print("Login failed with exception:", qName)
+                }
+                return nil
+            }
+            
+            // 8. Try to grab a new JSESSIONID cookie
+            if let cookieHeader = http.value(forHTTPHeaderField: "Set-Cookie") {
+                let parts = cookieHeader
+                    .split(separator: ";")
+                    .map(String.init)
+                if let jsPart = parts.first(where: { $0.hasPrefix("JSESSIONID=") }),
+                   let newID = jsPart.split(separator: "=").last
+                {
+                    let session = String(newID)
+                    DispatchQueue.main.async {
+                        self.jsessionId = session
                     }
-                } else {
-                    print("Failed to build regex for JSESSIONID.")
-                    return nil
+                    print("Got new JSESSIONID:", session)
+                    return session
                 }
             }
             
-            // 8) No Set-Cookie header present. If status 2xx, reuse existing session
-            if (200 ... 299).contains(httpResponse.statusCode) {
-                if let existing = self.jsessionId {
-                    print("No new Set-Cookie header. Reusing old JSESSIONID:", existing)
-                    return existing
-                } else {
-                    print("Login succeeded but no Set-Cookie header, and no stored session.")
-                    return nil
-                }
+            // 9. No new cookie – but status 2xx means login still good
+            if (200...299).contains(http.statusCode),
+               let old = self.jsessionId
+            {
+                print("Reusing old JSESSIONID:", old)
+                return old
             }
             
-            // 9) If we get here, login failed (status not 2xx, no Set-Cookie)
-            print("Login failed. HTTP status code:", httpResponse.statusCode)
+            // 10. If we get here, something unexpected happened
+            print("Login got status \(http.statusCode) but no session")
             return nil
             
         } catch {
-            print("Network error during login:", error)
+            print("Network or JSON error:", error)
             return nil
         }
     }
+
     
     func getTcSessionInfo(tcEndpointUrl: String) async -> SessionInfoResponse? {
         // 1) Ensure we have a JSESSIONID from a prior login

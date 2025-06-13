@@ -26,7 +26,7 @@ class ItemsGeneratorViewModel: ObservableObject {
     @Published var itemTypes: [String] = []
     //
     private let dataStorageContext: NSManagedObjectContext
-  
+    
     init(
         persistenceController: NSManagedObjectContext = PersistenceControllerGeneratedItemsData.shared.container.viewContext
     ) {
@@ -38,10 +38,10 @@ class ItemsGeneratorViewModel: ObservableObject {
         self.dataStorageContext = persistenceController
         //
         SettingsManager.shared.$itemsListOfTypes_storage
-                .sink { [weak self] newTypes in
-                       self?.itemTypes = newTypes
-                   }
-                   .store(in: &cancellables)
+            .sink { [weak self] newTypes in
+                self?.itemTypes = newTypes
+            }
+            .store(in: &cancellables)
     }
     
     func generateItems() {
@@ -52,39 +52,6 @@ class ItemsGeneratorViewModel: ObservableObject {
             }
             
             do {
-                
-                let promptZZZ = """
-                You are a domain expert who converts industry-specific items into perfect JSON format. 
-                
-                EXAMPLE INPUT: 
-                Domain: Automotive
-                Count: 2
-                
-                EXAMPLE JSON OUTPUT:
-                {
-                    "items": [
-                        {
-                            "name": "Turbocharger",
-                            "desc": "Boosts engine power via forced induction"
-                        },
-                        {
-                            "name": "OBD-II Scanner",
-                            "desc": "Reads vehicle diagnostic trouble codes"
-                        }
-                    ]
-                }
-                
-                ACTUAL TASK:
-                Generate a list of \(count) real-world items related to the domain "\(domainName)" (e.g., Automotive, Aerospace, Medical Devices, Electronics, etc.). Follow these rules:
-                1. Only use actual industry-standard terms
-                2. Descriptions must be 5-10 words
-                3. Maintain technical accuracy
-                
-                Generate the output now for:
-                Domain: \(domainName)
-                Count: \(count)
-                """
-                
                 // Call the DeepSeek API
                 let response = try await deepSeekApi.chatLLM(
                     apiKey: SettingsManager.shared.apiKey,
@@ -145,14 +112,14 @@ class ItemsGeneratorViewModel: ObservableObject {
             record.id = UUID()                   // new unique ID for this batch
             record.name = self.domainName  // or whatever you call that field
             record.timestamp = Date()
-
+            
             // 2. Encode the whole items array
             if let data = try? JSONEncoder().encode(self.generatedItems) {
                 record.rawResponse = data
             } else {
                 print("❌ Failed to JSON-encode generatedItems")
             }
-
+            
             // 3. Save once
             do {
                 try self.dataStorageContext.save()
@@ -161,10 +128,69 @@ class ItemsGeneratorViewModel: ObservableObject {
             }
         }
     }
-
     
+    
+    
+    //    func createSelectedItems() async -> [ItemCreationResult] {
+    //        guard !isLoading else { return [] }
+    //        isLoading = true
+    //        defer { isLoading = false }
+    //
+    //        // 1) Make the one folder for all new items
+    //        let (folderUid, folderCls, folderType) = await tcApi.createFolder(
+    //            tcEndpointUrl: APIConfig.tcCreateFolder(tcUrl: SettingsManager.shared.tcURL),
+    //            name: domainName,
+    //            desc: "Some items related to \(domainName)",
+    //            containerUid: SettingsManager.shared.itemsFolderUid,
+    //            containerClassName: SettingsManager.shared.itemsFolderClassName,
+    //            containerType: SettingsManager.shared.itemsFolderType
+    //        )
+    //
+    //        guard
+    //            let containerUid = folderUid,
+    //            let containerCls = folderCls,
+    //            let containerTyp = folderType
+    //        else {
+    //            // If folder creation failed, mark all as failed
+    //            return generatedItems
+    //                .filter { $0.isEnabled }
+    //                .map { ItemCreationResult(itemName: $0.name, success: false) }
+    //        }
+    //
+    //        // 2) Loop and create each item inside that one folder
+    //        var results: [ItemCreationResult] = []
+    //        self.containerFolderUid=containerUid
+    //        for item in generatedItems where item.isEnabled {
+    //            let (newUid, newRev) = await tcApi.createItem(
+    //                tcEndpointUrl: APIConfig.tcCreateItem(tcUrl: SettingsManager.shared.tcURL),
+    //                name: item.name,
+    //                type: item.type,
+    //                description: item.desc,
+    //                containerUid: containerUid,
+    //                containerClassName: containerCls,
+    //                containerType: containerTyp
+    //            )
+    //            let didSucceed = (newUid != nil && newRev != nil)
+    //            results.append(.init(itemName: item.name, success: didSucceed))
+    //        }
+    //
+    //        return results
+    //    }
     
     func createSelectedItems() async -> [ItemCreationResult] {
+        // 0) Login first
+        guard let session = await tcApi.tcLogin(
+            tcEndpointUrl: APIConfig.tcLoginUrl(tcUrl: SettingsManager.shared.tcURL),
+            userName: SettingsManager.shared.tcUsername,
+            userPassword: SettingsManager.shared.tcPassword
+        ) else {
+            print("Login failed. Cannot create items.")
+            // Mark all as failed
+            return generatedItems
+                .filter { $0.isEnabled }
+                .map { ItemCreationResult(itemName: $0.name, success: false) }
+        }
+       
         guard !isLoading else { return [] }
         isLoading = true
         defer { isLoading = false }
@@ -192,7 +218,8 @@ class ItemsGeneratorViewModel: ObservableObject {
 
         // 2) Loop and create each item inside that one folder
         var results: [ItemCreationResult] = []
-        self.containerFolderUid=containerUid
+        self.containerFolderUid = containerUid
+
         for item in generatedItems where item.isEnabled {
             let (newUid, newRev) = await tcApi.createItem(
                 tcEndpointUrl: APIConfig.tcCreateItem(tcUrl: SettingsManager.shared.tcURL),
@@ -209,4 +236,6 @@ class ItemsGeneratorViewModel: ObservableObject {
 
         return results
     }
+
+    
 }
