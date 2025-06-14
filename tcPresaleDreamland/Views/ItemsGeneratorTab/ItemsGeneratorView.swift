@@ -79,7 +79,7 @@ struct ItemsGeneratorContent: View {
                     Button("Generate Items") {
                         vm.generateItems()
                     }
-                    .help("Generate Items")
+                    .help("Generate a list of items using DeepSeek")
                     .disabled(vm.isLoading || vm.domainName.isEmpty)
                 }
                 .padding()
