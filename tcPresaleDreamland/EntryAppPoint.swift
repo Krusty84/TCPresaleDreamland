@@ -10,7 +10,6 @@ import AppKit
 import LoggerHelper
 
 @main
-
 struct EntryPointApp: App {
     init() {
         Helpers.checkInternetConnection {

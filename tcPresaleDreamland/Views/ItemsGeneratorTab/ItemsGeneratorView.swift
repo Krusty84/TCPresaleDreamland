@@ -27,159 +27,160 @@ struct ItemsGeneratorContent: View {
         )
     }
     
-    var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            // Top controls
-            HStack {
-                TextField("Domain", text: $vm.domainName)
-                    .textFieldStyle(RoundedBorderTextFieldStyle())
+        var body: some View {
+            VStack(alignment: .leading, spacing: 0) {
+                // Top controls
+                HStack {
+                    TextField("Domain", text: $vm.domainName)
+                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                        .frame(width: 200)
+                        .help("Product (for example: airplane, transmitter, neutron accelerator, etc.) or industry (for example: nuclear, chemical, etc)")
+    
+                    HStack(spacing: 4) {
+                        Text("Count:")
+                        Stepper(
+                            value: Binding(
+                                get: { Int(vm.count) ?? 10 },
+                                set: { vm.count = "\($0)" }
+                            ),
+                            in: 1...1000,
+                            step: 1
+                        ) {
+                            Text("\(Int(vm.count) ?? 10)")
+                                .monospacedDigit()
+                                .frame(width: 60)
+                        }
+                    }
+                    .help("Expected number of generated items")
+                    .frame(width: 140)
+    
+                    HStack(spacing: 4) {
+                        Text("Temperature:")
+                        Stepper(value: $vm.itemsTemperature, in: 0...1, step: 0.1) {
+                            Text("\(vm.itemsTemperature, specifier: "%.1f")")
+                                .monospacedDigit()
+                                .frame(width: 40)
+                        }
+                    }
+                    .help("Creativity level: the higher the value, the more creative it is, but it might be far from reality")
                     .frame(width: 200)
-                    .help("Product (for example: airplane, transmitter, neutron accelerator, etc.) or industry (for example: nuclear, chemical, etc)")
-                
-                HStack(spacing: 4) {
-                    Text("Count:")
-                    Stepper(
-                        value: Binding(
-                            get: { Int(vm.count) ?? 10 },
-                            set: { vm.count = "\($0)" }
-                        ),
-                        in: 1...1000,
-                        step: 1
-                    ) {
-                        Text("\(Int(vm.count) ?? 10)")
-                            .monospacedDigit()
-                            .frame(width: 60)
+    
+                    HStack(spacing: 4) {
+                        Text("Tokens:")
+                        Stepper(value: $vm.itemsMaxTokens, in: 100...4000, step: 100) {
+                            Text("\(vm.itemsMaxTokens)")
+                                .monospacedDigit()
+                                .frame(width: 50)
+                        }
                     }
-                }
-                .help("Expected number of generated items")
-                .frame(width: 140)
-                
-                HStack(spacing: 4) {
-                    Text("Temperature:")
-                    Stepper(value: $vm.itemsTemperature, in: 0...1, step: 0.1) {
-                        Text("\(vm.itemsTemperature, specifier: "%.1f")")
-                            .monospacedDigit()
-                            .frame(width: 40)
+                    .help("The maximum number of tokens that can be generated")
+                    .frame(width: 160)
+    
+                    Button("Generate Items") {
+                        vm.generateItems()
                     }
+                    .help("Generate Items")
+                    .disabled(vm.isLoading || vm.domainName.isEmpty)
                 }
-                .help("Creativity level: the higher the value, the more creative it is, but it might be far from reality")
-                .frame(width: 200)
-                
-                HStack(spacing: 4) {
-                    Text("Tokens:")
-                    Stepper(value: $vm.itemsMaxTokens, in: 100...4000, step: 100) {
-                        Text("\(vm.itemsMaxTokens)")
-                            .monospacedDigit()
-                            .frame(width: 50)
-                    }
-                }
-                .help("The maximum number of tokens that can be generated")
-                .frame(width: 160)
-                
-                Button("Generate Items") {
-                    vm.generateItems()
-                }
-                .help("Generate Items")
-                .disabled(vm.isLoading || vm.domainName.isEmpty)
-            }
-            .padding()
-            
-            Divider()
-            
-            // Table wrapped in a ZStack so we can overlay the loading spinner
-            ZStack {
-                // 1) The actual table of items
-                Table(vm.generatedItems) {
-                    // 1) First column: checkbox + contextMenu on each row’s cell
-                    TableColumn("") { item in
-                        Toggle("", isOn: binding(for: item, keyPath: \.isEnabled))
-                            .toggleStyle(CheckboxToggleStyle())
+                .padding()
+    
+                Divider()
+    
+                // Table wrapped in a ZStack so we can overlay the loading spinner
+                ZStack {
+                    // 1) The actual table of items
+                    Table(vm.generatedItems) {
+                        // 1) First column: checkbox + contextMenu on each row’s cell
+                        TableColumn("") { item in
+                            Toggle("", isOn: binding(for: item, keyPath: \.isEnabled))
+                                .toggleStyle(CheckboxToggleStyle())
+                                .contextMenu {
+                                    Button("Select All") {
+                                        for i in vm.generatedItems.indices {
+                                            vm.generatedItems[i].isEnabled = true
+                                        }
+                                    }
+                                    Button("Deselect All") {
+                                        for i in vm.generatedItems.indices {
+                                            vm.generatedItems[i].isEnabled = false
+                                        }
+                                    }
+                                }
+                        }
+                        .width(20)
+    
+                        // 2) Name column (display only)
+                        TableColumn("Name") { item in
+                            Text(item.name)
+                                .font(.headline)
+                        }
+                        .width(min: 100, max: 200)
+    
+                        // 3) Description column (display only)
+                        TableColumn("Description") { item in
+                            Text(item.desc)
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                        }
+                        .width(min: 100, max: 300)
+    
+                        // 4) Type column: picker + contextMenu on each row’s picker
+                        TableColumn("Type") { item in
+                            Picker("", selection: binding(for: item, keyPath: \.type)) {
+                                ForEach(vm.itemTypes, id: \.self) { type in
+                                    Text(type).tag(type)
+                                }
+                            }
+                            .help("Type of object that will be created in Teamcenter")
+                            .pickerStyle(MenuPickerStyle())
+                            .frame(width: 120)
+                            .labelsHidden()
                             .contextMenu {
-                                Button("Select All") {
+                                Button("Apply to All") {
+                                    let chosenType = item.type
                                     for i in vm.generatedItems.indices {
-                                        vm.generatedItems[i].isEnabled = true
-                                    }
-                                }
-                                Button("Deselect All") {
-                                    for i in vm.generatedItems.indices {
-                                        vm.generatedItems[i].isEnabled = false
+                                        vm.generatedItems[i].type = chosenType
                                     }
                                 }
                             }
-                    }
-                    .width(20)
-                    
-                    // 2) Name column (display only)
-                    TableColumn("Name") { item in
-                        Text(item.name)
-                            .font(.headline)
-                    }
-                    .width(min: 100, max: 200)
-                    
-                    // 3) Description column (display only)
-                    TableColumn("Description") { item in
-                        Text(item.desc)
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                    }
-                    .width(min: 100, max: 300)
-                    
-                    // 4) Type column: picker + contextMenu on each row’s picker
-                    TableColumn("Type") { item in
-                        Picker("", selection: binding(for: item, keyPath: \.type)) {
-                            ForEach(vm.itemTypes, id: \.self) { type in
-                                Text(type).tag(type)
-                            }
                         }
-                        .help("Type of object that will be created in Teamcenter")
-                        .pickerStyle(MenuPickerStyle())
-                        .frame(width: 120)
-                        .labelsHidden()
-                        .contextMenu {
-                            Button("Apply to All") {
-                                let chosenType = item.type
-                                for i in vm.generatedItems.indices {
-                                    vm.generatedItems[i].type = chosenType
-                                }
-                            }
+                        .width(120)
+                    }
+    
+                    // 2) If vm.isLoading is true, overlay a semi-transparent layer + spinner
+                    if vm.isLoading {
+                        // Semi-transparent background to dim the table
+                        Color.black.opacity(0.25)
+                            .edgesIgnoringSafeArea(.all)
+    
+                        // Centered ProgressView without a background
+                        ProgressView()
+                            .progressViewStyle(CircularProgressViewStyle())
+                            .scaleEffect(1.5) // make it a bit larger if you like
+                    }
+                }
+    
+                PushToTCView(
+                    uid: vm.containerFolderUid,
+                    containerFolderName: vm.domainName,
+                    pushToHistoryAction: {
+                        await vm.saveGeneratedItemsToHistory()
+                    },
+                    pushToTCVoidAction: {
+                        let report = await vm.createSelectedItems()
+                        let failures = report
+                            .filter { !$0.success }
+                            .map(\.itemName)
+    
+                        if !failures.isEmpty {
+                            // all good
                         }
                     }
-                    .width(120)
-                }
-                
-                // 2) If vm.isLoading is true, overlay a semi-transparent layer + spinner
-                if vm.isLoading {
-                    // Semi-transparent background to dim the table
-                    Color.black.opacity(0.25)
-                        .edgesIgnoringSafeArea(.all)
-                    
-                    // Centered ProgressView without a background
-                    ProgressView()
-                        .progressViewStyle(CircularProgressViewStyle())
-                        .scaleEffect(1.5) // make it a bit larger if you like
-                }
+                ).disabled(vm.generatedItems.allSatisfy { !$0.isEnabled })
             }
-            
-            PushToTCView(
-                uid: vm.containerFolderUid,
-                containerFolderName: vm.domainName,
-                pushToHistoryAction: {
-                    await vm.saveGeneratedItemsToHistory()
-                },
-                pushToTCVoidAction: {
-                    let report = await vm.createSelectedItems()
-                    let failures = report
-                        .filter { !$0.success }
-                        .map(\.itemName)
-                    
-                    if !failures.isEmpty {
-                        // all good
-                    }
-                }
-            ).disabled(vm.generatedItems.allSatisfy { !$0.isEnabled })
+            .frame(minWidth: 600, minHeight: 500)
         }
-        .frame(minWidth: 600, minHeight: 500)
-    }
+    
 }
 
 

@@ -355,24 +355,21 @@ struct SettingsTabContent: View {
                         VStack(spacing: 4) {
                             Text("Items").font(.headline)
                             // .foregroundColor(.secondary)
-                            ListEditorView(items: SettingsManager.shared.itemsListOfTypes)
-                                .frame(maxWidth: .infinity)
+                           ListEditorView(items: SettingsManager.shared.itemsListOfTypes).frame(maxWidth: .infinity)
                         }
                         
                         // Column B
                         VStack(spacing: 4) {
                             Text("BOM's").font(.headline)
                             // .foregroundColor(.secondary)
-                            ListEditorView(items: SettingsManager.shared.itemsListOfTypes)
-                                .frame(maxWidth: .infinity)
+                           ListEditorView(items: SettingsManager.shared.itemsListOfTypes).frame(maxWidth: .infinity)
                         }.disabled(true)
                         
                         // Column C
                         VStack(spacing: 4) {
                             Text("Requirements").font(.headline)
                             // .foregroundColor(.secondary)
-                            ListEditorView(items: SettingsManager.shared.itemsListOfTypes)
-                                .frame(maxWidth: .infinity)
+                            ListEditorView(items: SettingsManager.shared.itemsListOfTypes).frame(maxWidth: .infinity)
                         }.disabled(true)
                     }
                     .frame(height: 300) // keep same height as before
