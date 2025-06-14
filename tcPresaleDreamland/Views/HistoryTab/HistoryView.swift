@@ -7,12 +7,14 @@
 
 import SwiftUI
 import CoreData
+import AppKit
+import UniformTypeIdentifiers
 
 struct HistoryContent: View {
     @StateObject private var vm = HistoryViewModel()
     @ObservedObject var vmItemsGeneratorViewModel: ItemsGeneratorViewModel
     @State private var selectedItemsHistoryRow: GeneratedItemsDataByLLM.ID? = nil
-   
+    
     @State private var itemsExpanded = true
     @State private var bomsExpanded = false
     @State private var specsExpanded = false
@@ -29,16 +31,16 @@ struct HistoryContent: View {
         .padding(20)
         .environmentObject(vmItemsGeneratorViewModel)
     }
-
+    
     // MARK: Items Generated History
-
+    
     private var itemsHistorySection: some View {
         DisclosureGroup(
             isExpanded: $itemsExpanded,
             content: {
                 VStack(spacing: 16) {
-                   itemsTable
-                   itemsButtons
+                    itemsTable
+                    itemsButtons
                 }
                 .padding(12)
                 .background(Color(.windowBackgroundColor))
@@ -53,7 +55,7 @@ struct HistoryContent: View {
             }
         )
     }
-
+    
     // 1) break out the Table into its own var
     private var itemsTable: some View {
         Table(vm.itemsHistory, selection: $selectedItemsHistoryRow) {
@@ -82,7 +84,7 @@ struct HistoryContent: View {
             }
         }
     }
-
+    
     private var itemsButtons: some View {
         HStack {
             Button("Restore") {
@@ -92,18 +94,64 @@ struct HistoryContent: View {
             }
             .disabled(selectedItemsHistoryRow == nil)
             Spacer()
+            
+            Button("Import Items List") {
+                Task { @MainActor in
+                         let panel = NSOpenPanel()
+                         panel.allowedContentTypes = [.json]
+                         panel.canChooseDirectories = false
+                         panel.allowsMultipleSelection = false
+
+                         guard panel.runModal() == .OK,
+                               let url = panel.url,
+                               let data = try? Data(contentsOf: url)
+                         else { return }
+
+                         do {
+                             let pkg = try JSONDecoder()
+                                 .decode(HistoryViewModel.ImportPackage.self, from: data)
+                             vm.importPackage(pkg)
+                         } catch {
+                             print("❌ Failed to decode import JSON:", error)
+                         }
+                     }
+            }
+            
+            Button("Export Items List") {
+                Task { @MainActor in
+                    guard let id = selectedItemsHistoryRow,
+                          let jsonData = vm.exportItemsDataToJSONFile(selectedRowId: [id])
+                    else { return }
+
+                    let panel = NSSavePanel()
+                    panel.allowedContentTypes = [.json]
+                    let batch = vm.itemsHistory.first { $0.id == id }
+                    let defaultName = batch?.name ?? "export"
+                    panel.nameFieldStringValue = "\(defaultName).json"
+
+                    if panel.runModal() == .OK, let url = panel.url {
+                        do {
+                            try jsonData.write(to: url)
+                        } catch {
+                            print("❌ Write error:", error)
+                        }
+                    }
+                }
+            }
+            .disabled(selectedItemsHistoryRow == nil)
+            
+            //Spacer()
             Button("Delete") {
                 if let selectedID = selectedItemsHistoryRow {
                     vm.delete(selectedRowId: [selectedID])
                 }
             }.disabled(selectedItemsHistoryRow == nil)
-            .foregroundColor(.red)
+                .foregroundColor(.red)
         }
         .padding(.top, 8)
     }
-
+    
     // MARK: BOM Generated History
-
     private var bomsHistorySection: some View {
         DisclosureGroup(
             isExpanded: $bomsExpanded,
@@ -125,7 +173,7 @@ struct HistoryContent: View {
             }
         )
     }
-  
+    
     // MARK: Req Spec Generated History
     
     private var specsHistorySection: some View {
@@ -149,12 +197,12 @@ struct HistoryContent: View {
             }
         )
     }
-
+    
     struct SectionHeader: View {
         let title: String
         let systemImage: String
         var isExpanded: Bool
-
+        
         var body: some View {
             HStack {
                 Label(title, systemImage: systemImage)
