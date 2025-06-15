@@ -13,9 +13,7 @@ import Foundation
 import CoreData
 
 class HistoryViewModel: ObservableObject {
-    // the fetched batches
     @Published var itemsHistory: [GeneratedItemsDataByLLM] = []
-    
     private let context: NSManagedObjectContext
 
     init(
@@ -44,18 +42,18 @@ class HistoryViewModel: ObservableObject {
         }
     }
 
-    /// Restore the selected batches into your Item generator VM
-    func restore(
+    // Restore the selected histoy item to Items Generator View
+    func restoreItemHistory(
         selectedRowId: Set<GeneratedItemsDataByLLM.ID>,
         itemsGeneratorViewModel itemVM: ItemsGeneratorViewModel
     ) {
         var allItems: [Item] = []
-        for batch in itemsHistory
+        for item in itemsHistory
                 
-          where selectedRowId.contains(batch.id!)
+          where selectedRowId.contains(item.id!)
         {
-            itemVM.domainName = batch.name!
-            if let data = batch.rawResponse,
+            itemVM.domainName = item.name!
+            if let data = item.rawResponse,
                let items = try? JSONDecoder()
                  .decode([Item].self, from: data)
             {
@@ -65,6 +63,22 @@ class HistoryViewModel: ObservableObject {
         print(allItems)
         // Replace the generated items
         itemVM.generatedItems = allItems
+    }
+    
+    // Delete the selected history item
+    func deleteItemHistoty(selectedRowId: Set<GeneratedItemsDataByLLM.ID>) {
+        for item in itemsHistory
+          where selectedRowId.contains(item.id!)
+        {
+            context.delete(item)
+        }
+        do {
+            try context.save()
+        } catch {
+            print("❌ Delete error:", error)
+        }
+        // reload to refresh the list
+        loadItemsHistory()
     }
     
     
@@ -78,7 +92,7 @@ class HistoryViewModel: ObservableObject {
            }
 
            // Find the first batch matching one of the selected IDs
-           guard let batch = itemsHistory.first(where: {
+           guard let item = itemsHistory.first(where: {
                if let id = $0.id { return selectedRowId.contains(id) }
                return false
            }) else {
@@ -88,7 +102,7 @@ class HistoryViewModel: ObservableObject {
 
            // Decode the rawResponse back into [Item]
            guard
-               let raw = batch.rawResponse,
+               let raw = item.rawResponse,
                let items = try? JSONDecoder().decode([Item].self, from: raw)
            else {
                print("❌ Failed to decode batch.rawResponse")
@@ -97,7 +111,7 @@ class HistoryViewModel: ObservableObject {
 
            // Build the export package
            let package = ExportPackage(
-               containerFolderName: batch.name ?? "Export",
+               containerFolderName: item.name ?? "Export",
                items: items
            )
 
@@ -112,7 +126,7 @@ class HistoryViewModel: ObservableObject {
            }
        }
     
-    func importPackage(_ pkg: ImportPackage) {
+    func importItemsDataFromJSONFile(_ pkg: ImportPackage) {
            context.perform {
                let record = GeneratedItemsDataByLLM(context: self.context)
                record.id = UUID()
@@ -139,24 +153,7 @@ class HistoryViewModel: ObservableObject {
            let containerFolderName: String
            let items: [Item]
        }
-    
 
-    /// Delete the selected history batches
-    func delete(selectedRowId: Set<GeneratedItemsDataByLLM.ID>) {
-        for batch in itemsHistory
-          where selectedRowId.contains(batch.id!)
-        {
-            context.delete(batch)
-        }
-        do {
-            try context.save()
-        } catch {
-            print("❌ Delete error:", error)
-        }
-        // reload to refresh the list
-        loadItemsHistory()
-    }
-    
      var dateFormatter: DateFormatter {
         let f = DateFormatter()
         f.dateStyle = .short

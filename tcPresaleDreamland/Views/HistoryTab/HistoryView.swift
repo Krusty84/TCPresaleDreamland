@@ -89,7 +89,7 @@ struct HistoryContent: View {
         HStack {
             Button("Restore") {
                 if let selectedID = selectedItemsHistoryRow {
-                    vm.restore(selectedRowId: [selectedID], itemsGeneratorViewModel: vmItemsGeneratorViewModel)
+                    vm.restoreItemHistory(selectedRowId: [selectedID], itemsGeneratorViewModel: vmItemsGeneratorViewModel)
                 }
             }
             .disabled(selectedItemsHistoryRow == nil)
@@ -110,7 +110,7 @@ struct HistoryContent: View {
                          do {
                              let pkg = try JSONDecoder()
                                  .decode(HistoryViewModel.ImportPackage.self, from: data)
-                             vm.importPackage(pkg)
+                             vm.importItemsDataFromJSONFile(pkg)
                          } catch {
                              print("❌ Failed to decode import JSON:", error)
                          }
@@ -143,7 +143,7 @@ struct HistoryContent: View {
             //Spacer()
             Button("Delete") {
                 if let selectedID = selectedItemsHistoryRow {
-                    vm.delete(selectedRowId: [selectedID])
+                    vm.deleteItemHistoty(selectedRowId: [selectedID])
                 }
             }.disabled(selectedItemsHistoryRow == nil)
                 .foregroundColor(.red)

@@ -8,26 +8,37 @@
 import Foundation
 import Combine
 
+// Service class to call Teamcenter REST APIs
+// Conforms to ObservableObject for SwiftUI bindings
 class TeamcenterAPIService: ObservableObject {
+    // Shared singleton instance
     static let shared = TeamcenterAPIService()
+    // Helper utilities for Teamcenter (e.g. URL building)
     private let tcHelpers = TCHelpers.shared
-    // This will hold the JSESSIONID string after a successful login
+    // Published JSESSIONID string after a successful login
     @Published var jsessionId: String? = nil
     
+    // Private init to enforce singleton pattern
     private init() {}
     
+    /// Login to Teamcenter and store JSESSIONID cookie
+    /// - Parameters:
+    ///   - tcEndpointUrl: Full login URL for Teamcenter
+    ///   - userName: User's login name
+    ///   - userPassword: User's password
+    /// - Returns: JSESSIONID string if successful, else nil
     func tcLogin(
         tcEndpointUrl: String,
         userName: String,
         userPassword: String
     ) async -> String? {
-        // 1. Build URL
+        // 1. Build URL from string
         guard let url = URL(string: tcEndpointUrl) else {
             print("Invalid URL:", tcEndpointUrl)
             return nil
         }
         
-        // 2. Build payload exactly as Teamcenter needs
+        // 2. Create payload with empty header and login credentials
         let payload: [String: Any] = [
             "header": ["state": [:], "policy": [:]],
             "body": [
@@ -42,7 +53,7 @@ class TeamcenterAPIService: ObservableObject {
             ]
         ]
         
-        // 3. JSON-encode the payload
+        // 3. Convert payload to JSON data
         let jsonData: Data
         do {
             jsonData = try JSONSerialization.data(withJSONObject: payload)
@@ -51,21 +62,21 @@ class TeamcenterAPIService: ObservableObject {
             return nil
         }
         
-        // 4. Build the request
+        // 4. Build POST request
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = jsonData
         
         do {
-            // 5. Send it
+            // 5. Send network request
             let (data, response) = try await URLSession.shared.data(for: request)
             guard let http = response as? HTTPURLResponse else {
                 print("Not an HTTP response")
                 return nil
             }
             
-            // 6. Parse JSON body into a Dictionary
+            // 6. Parse JSON response into dictionary
             guard
                 let jsonObj = try JSONSerialization.jsonObject(with: data) as? [String: Any],
                 let qName = jsonObj[".QName"] as? String
@@ -74,11 +85,11 @@ class TeamcenterAPIService: ObservableObject {
                 return nil
             }
             
-            // 7. Check if it’s the login response or an exception
+            // 7. Check if login succeeded or failed
             if qName.contains("Session.LoginResponse") {
-                // success
+                // success, proceed
             } else {
-                // failure: show the message if any
+                // failure: log server message if present
                 if let msg = jsonObj["message"] as? String {
                     print("Login error from server:", msg)
                 } else {
@@ -87,7 +98,7 @@ class TeamcenterAPIService: ObservableObject {
                 return nil
             }
             
-            // 8. Try to grab a new JSESSIONID cookie
+            // 8. Extract JSESSIONID from Set-Cookie header
             if let cookieHeader = http.value(forHTTPHeaderField: "Set-Cookie") {
                 let parts = cookieHeader
                     .split(separator: ";")
@@ -96,6 +107,7 @@ class TeamcenterAPIService: ObservableObject {
                    let newID = jsPart.split(separator: "=").last
                 {
                     let session = String(newID)
+                    // Update published property on main thread
                     DispatchQueue.main.async {
                         self.jsessionId = session
                     }
@@ -104,7 +116,7 @@ class TeamcenterAPIService: ObservableObject {
                 }
             }
             
-            // 9. No new cookie – but status 2xx means login still good
+            // 9. If no new cookie but status is 2xx, reuse old session
             if (200...299).contains(http.statusCode),
                let old = self.jsessionId
             {
@@ -112,7 +124,7 @@ class TeamcenterAPIService: ObservableObject {
                 return old
             }
             
-            // 10. If we get here, something unexpected happened
+            // 10. Unexpected case: no session found
             print("Login got status \(http.statusCode) but no session")
             return nil
             
@@ -121,61 +133,59 @@ class TeamcenterAPIService: ObservableObject {
             return nil
         }
     }
-
     
+    /// Fetch session info using stored JSESSIONID
+    /// - Parameter tcEndpointUrl: URL for session info API
+    /// - Returns: Decoded SessionInfoResponse or nil
     func getTcSessionInfo(tcEndpointUrl: String) async -> SessionInfoResponse? {
-        // 1) Ensure we have a JSESSIONID from a prior login
+        // 1) Ensure we are logged in
         guard let session = self.jsessionId else {
             print("No JSESSIONID found. Please login first.")
             return nil
         }
         
-        // 2) Validate the URL
+        // 2) Create URL
         guard let url = URL(string: tcEndpointUrl) else {
             print("Invalid URL string: \(tcEndpointUrl)")
             return nil
         }
         
-        // 3) Prepare payload with only header (empty state & policy)
+        // 3) Minimal payload with empty header
         let payload: [String: Any] = [
-            "header": [
-                "state": [:],
-                "policy": [:]
-            ]
+            "header": ["state": [:], "policy": [:]]
         ]
         
-        // 4) Serialize that minimal payload to Data
+        // 4) Encode payload
         let jsonData: Data
         do {
-            jsonData = try JSONSerialization.data(withJSONObject: payload, options: [])
+            jsonData = try JSONSerialization.data(withJSONObject: payload)
         } catch {
             print("Failed to serialize JSON payload for session info:", error)
             return nil
         }
         
-        // 5) Build URLRequest with Cookie header
+        // 5) Build request with Cookie header
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        //    Attach the existing JSESSIONID as a Cookie
         request.setValue("JSESSIONID=\(session)", forHTTPHeaderField: "Cookie")
         request.httpBody = jsonData
         
         do {
-            // 6) Execute the request
+            // 6) Send request
             let (data, response) = try await URLSession.shared.data(for: request)
             guard let httpResponse = response as? HTTPURLResponse else {
                 print("No HTTPURLResponse when fetching session info.")
                 return nil
             }
             
-            // 7) Check for HTTP 2xx status
+            // 7) Check for 2xx status code
             guard (200...299).contains(httpResponse.statusCode) else {
                 print("Failed to fetch session info. HTTP status:", httpResponse.statusCode)
                 return nil
             }
             
-            // 8) Decode JSON into SessionInfoResponse via Codable
+            // 8) Decode JSON into SessionInfoResponse
             let decoder = JSONDecoder()
             do {
                 let sessionInfo = try decoder.decode(SessionInfoResponse.self, from: data)
@@ -191,6 +201,7 @@ class TeamcenterAPIService: ObservableObject {
         }
     }
     
+    /// Get properties of a single object by UID
     func getProperties(
         tcEndpointUrl: String,
         uid: String,
@@ -198,47 +209,43 @@ class TeamcenterAPIService: ObservableObject {
         type: String,
         attributes: [String]
     ) async -> [String: String]? {
-        // 1a) Make sure JSESSIONID is set
+        // 1a) Check login
         guard let session = self.jsessionId else {
             print("Cannot call getProperties: no JSESSIONID stored. Please login first.")
             return nil
         }
-        
         // 1b) Build URL
         guard let url = URL(string: tcEndpointUrl) else {
             print("Invalid getProperties URL: \(tcEndpointUrl)")
             return nil
         }
         
-        // 1c) Build the single-object dictionary
+        // 1c) Single object descriptor dictionary
         let objectEntry: [String: String] = [
             "uid": uid,
             "className": className,
             "type": type
         ]
         
-        // 1d) Build the JSON payload
+        // 1d) Full payload with header and body
         let payload: [String: Any] = [
-            "header": [
-                "state": [:],
-                "policy": [:]
-            ],
+            "header": ["state": [:], "policy": [:]],
             "body": [
                 "objects": [objectEntry],
                 "attributes": attributes
             ]
         ]
         
-        // 1e) Serialize to Data
+        // 1e) Serialize JSON
         let jsonData: Data
         do {
-            jsonData = try JSONSerialization.data(withJSONObject: payload, options: [])
+            jsonData = try JSONSerialization.data(withJSONObject: payload)
         } catch {
             print("Failed to serialize JSON for getProperties: \(error)")
             return nil
         }
         
-        // 1f) Build POST request
+        // 1f) Build POST request with Cookie
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -261,7 +268,7 @@ class TeamcenterAPIService: ObservableObject {
             let decoder = JSONDecoder()
             let responseObj = try decoder.decode(GetPropertiesResponse.self, from: data)
             
-            // 1i) Look up our single ModelObject by UID
+            // 1i) Locate our single object and its props
             guard
                 let modelDict = responseObj.modelObjects,
                 let singleObj = modelDict[uid],
@@ -271,15 +278,14 @@ class TeamcenterAPIService: ObservableObject {
                 return nil
             }
             
-            // 1j) Build a dictionary [attributeName: firstUiValue]
+            // 1j) Build result dictionary of first UI value per attribute
             var result: [String: String] = [:]
             for attr in attributes {
                 if let propValue = allProps[attr],
                    let firstUi = propValue.uiValues?.first {
                     result[attr] = firstUi
                 } else {
-                    // No value found → empty string
-                    result[attr] = ""
+                    result[attr] = "" // empty if missing
                 }
             }
             return result
@@ -290,75 +296,71 @@ class TeamcenterAPIService: ObservableObject {
         }
     }
     
+    /// Fetch the home_folder attribute for a given user
     func getUserHomeFolder(
         tcEndpointUrl: String,
         userUid: String
     ) async -> String? {
-        // 1) Make sure we have a stored JSESSIONID
+        // 1) Ensure login
         guard let session = self.jsessionId else {
             print("No JSESSIONID found. Please login first.")
             return nil
         }
         
-        // 2) Build the endpoint URL
+        // 2) Build URL
         guard let url = URL(string: tcEndpointUrl) else {
             print("Invalid URL string: \(tcEndpointUrl)")
             return nil
         }
         
-        // 3) Build the exact payload for fetching "home_folder"
+        // 3) Payload requesting only home_folder
         let payload: [String: Any] = [
-            "header": [
-                "state": [:],
-                "policy": [:]
-            ],
+            "header": ["state": [:], "policy": [:]],
             "body": [
                 "objects": [[
                     "uid": userUid,
                     "className": "User",
                     "type": "User"
                 ]],
-                // We only request the "home_folder" attribute
                 "attributes": ["home_folder"]
             ]
         ]
         
-        // 4) Serialize payload to JSON data
+        // 4) Encode to JSON
         let jsonData: Data
         do {
-            jsonData = try JSONSerialization.data(withJSONObject: payload, options: [])
+            jsonData = try JSONSerialization.data(withJSONObject: payload)
         } catch {
             print("Failed to serialize JSON for getUserHomeFolder: \(error)")
             return nil
         }
         
-        // 5) Create and send the POST request
+        // 5) Build request
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        // Attach the JSESSIONID cookie
         request.setValue("JSESSIONID=\(session)", forHTTPHeaderField: "Cookie")
         request.httpBody = jsonData
         
         do {
-            // 6) Execute the network call
+            // 6) Send request
             let (data, response) = try await URLSession.shared.data(for: request)
             guard let httpResponse = response as? HTTPURLResponse else {
                 print("getUserHomeFolder did not return an HTTPURLResponse.")
                 return nil
             }
             
-            // 7) Check for an HTTP 2xx status
+            // 7) Check for success
             guard (200...299).contains(httpResponse.statusCode) else {
                 print("getUserHomeFolder failed. HTTP status =", httpResponse.statusCode)
                 return nil
             }
             
-            // 8) Decode the JSON into our Codable model
+            // 8) Decode using GetPropertiesResponse
             let decoder = JSONDecoder()
             let respObj = try decoder.decode(GetPropertiesResponse.self, from: data)
             
-            // 9) Find the single ModelObject for our userUid
+            // 9) Find property value
             guard
                 let modelDict = respObj.modelObjects,
                 let userObj = modelDict[userUid],
@@ -368,11 +370,11 @@ class TeamcenterAPIService: ObservableObject {
                 return nil
             }
             
-            // 10) Look up the "home_folder" entry and return its first UI value
+            // 10) Return first dbValue for home_folder
             if let homeVal = props["home_folder"]?.dbValues?.first {
                 return homeVal
             } else {
-                print("\"home_folder\" not found or has no uiValues.")
+                print("\"home_folder\" not found or has no dbValues.")
                 return nil
             }
             
@@ -382,6 +384,7 @@ class TeamcenterAPIService: ObservableObject {
         }
     }
     
+    /// Expand a folder, then fetch properties for each sub-object
     func expandFolder(
         tcUrl: String,
         folderUid: String,
@@ -393,13 +396,13 @@ class TeamcenterAPIService: ObservableObject {
         contentTypesFilter: [String],
         propertyAttributes: [String]
     ) async -> [[String: Any]]? {
-        // 2a) Ensure JSESSIONID is set
+        // 2a) Ensure login
         guard let session = self.jsessionId else {
             print("Cannot call expandFolder: no JSESSIONID stored. Please login first.")
             return nil
         }
         
-        // 2b) Build the two endpoint URLs
+        // 2b) Build URLs for expand and getProperties
         let expandUrlString = APIConfig.tcExpandFolder(tcUrl: tcUrl)
         let propsUrlString = APIConfig.tcGetPropertiesUrl(tcUrl: tcUrl)
         
@@ -411,14 +414,14 @@ class TeamcenterAPIService: ObservableObject {
             return nil
         }
         
-        // 2c) Build the single-folder entry
+        // 2c) Single folder descriptor
         let folderEntry: [String: String] = [
             "uid": folderUid,
             "className": className,
             "type": type
         ]
         
-        // 2d) Build the "pref" dictionary
+        // 2d) Preferences dictionary
         let pref: [String: Any] = [
             "expItemRev": expItemRev,
             "latestNRevs": latestNRevs,
@@ -426,35 +429,32 @@ class TeamcenterAPIService: ObservableObject {
             "contentTypesFilter": contentTypesFilter
         ]
         
-        // 2e) Compose the full JSON payload for expandFolder
+        // 2e) Build expandFolder payload
         let expandPayload: [String: Any] = [
-            "header": [
-                "state": [:],
-                "policy": [:]
-            ],
+            "header": ["state": [:], "policy": [:]],
             "body": [
                 "folders": [folderEntry],
                 "pref": pref
             ]
         ]
         
-        // 2f) Serialize that payload to Data
+        // 2f) Serialize payload
         let expandData: Data
         do {
-            expandData = try JSONSerialization.data(withJSONObject: expandPayload, options: [])
+            expandData = try JSONSerialization.data(withJSONObject: expandPayload)
         } catch {
             print("Failed to serialize JSON for expandFolder: \(error)")
             return nil
         }
         
-        // 2g) Build and send the expandFolder POST request
+        // 2g) Build expandFolder request
         var expandRequest = URLRequest(url: expandUrl)
         expandRequest.httpMethod = "POST"
         expandRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
         expandRequest.setValue("JSESSIONID=\(session)", forHTTPHeaderField: "Cookie")
         expandRequest.httpBody = expandData
         
-        // 2h) Perform the network call
+        // 2h) Send request and check status
         let responseData: Data
         do {
             let (data, response) = try await URLSession.shared.data(for: expandRequest)
@@ -470,7 +470,7 @@ class TeamcenterAPIService: ObservableObject {
             return nil
         }
         
-        // 2i) Decode the expandFolder JSON via Codable
+        // 2i) Decode expandFolder JSON
         let decoder = JSONDecoder()
         let expandResponseObj: ExpandFolderResponse
         do {
@@ -480,25 +480,23 @@ class TeamcenterAPIService: ObservableObject {
             return nil
         }
         
-        // 2j) Extract “serviceData” and then its “modelObjects”
+        // 2j) Extract serviceData modelObjects
         guard let serviceData = expandResponseObj.serviceData else {
             print("No \"ServiceData\" in expandFolder response.")
             return nil
         }
-        // modelObjects is non-optional ([String: FolderBasic]) by our Codable definition
         let modelObjects = serviceData.modelObjects
         
-        // 2k) Prepare the array we will return
+        // 2k) Prepare results array
         var finalResults: [[String: Any]] = []
         
-        // 2l) For each entry in modelObjects (key is UID, value is FolderBasic)
+        // 2l) Iterate over each FolderBasic in modelObjects
         for (_, folderInfo) in modelObjects {
-            // 2l-i) Use folderInfo.className, type, uid directly (non-optional)
             let cls = folderInfo.className
             let typ = folderInfo.type
             let uid = folderInfo.uid
             
-            // 2l-ii) Call getProperties(...) to fetch this folder’s properties
+            // 2l-ii) Fetch properties for this folder
             guard
                 let parsedProps = await getProperties(
                     tcEndpointUrl: propsUrlString,
@@ -508,13 +506,10 @@ class TeamcenterAPIService: ObservableObject {
                     attributes: propertyAttributes
                 )
             else {
-                // If getProperties failed, skip this object
-                continue
+                continue // skip on failure
             }
             
-            // 2l-iii) Build one dictionary containing:
-            //            - "uid", "className", "type"
-            //            - each requested attribute → its first UI value
+            // 2l-iii) Build result dictionary with basic info and attributes
             var resultEntry: [String: Any] = [
                 "uid": uid,
                 "className": cls,
@@ -524,14 +519,15 @@ class TeamcenterAPIService: ObservableObject {
                 resultEntry[attrName] = uiValue
             }
             
-            // 2l-iv) Append to our final array
+            // 2l-iv) Add to final results
             finalResults.append(resultEntry)
         }
         
-        // 2m) Return the array of dictionaries
+        // 2m) Return collected data
         return finalResults
     }
     
+    /// Create a new Teamcenter item under a container
     func createItem(
         tcEndpointUrl: String,
         name: String,
@@ -541,7 +537,7 @@ class TeamcenterAPIService: ObservableObject {
         containerClassName: String,
         containerType: String
     ) async -> (itemUid: String?, itemRevUid: String?) {
-        // 1. Ensure we have a session cookie
+        // 1. Check login
         guard let session = jsessionId else {
             print("No JSESSIONID—login first.")
             return (nil, nil)
@@ -553,7 +549,7 @@ class TeamcenterAPIService: ObservableObject {
             return (nil, nil)
         }
         
-        // 3. Build payload
+        // 3. Build create-item payload
         let payload: [String: Any] = [
             "header": ["state": [:], "policy": [:]],
             "body": [
@@ -585,7 +581,7 @@ class TeamcenterAPIService: ObservableObject {
             return (nil, nil)
         }
         
-        // 5. Create request
+        // 5. Build POST request
         var req = URLRequest(url: url)
         req.httpMethod = "POST"
         req.setValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -593,14 +589,14 @@ class TeamcenterAPIService: ObservableObject {
         req.httpBody = jsonData
         
         do {
-            // 6. Send and check status
+            // 6. Send request and check status
             let (data, resp) = try await URLSession.shared.data(for: req)
             guard let http = resp as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
                 print("HTTP error:", resp)
                 return (nil, nil)
             }
             
-            // 7. Decode only "output"
+            // 7. Decode CreateItemsResponse
             let decoder = JSONDecoder()
             let createResp = try decoder.decode(CreateItemsResponse.self, from: data)
             if let first = createResp.output?.first {
@@ -609,14 +605,13 @@ class TeamcenterAPIService: ObservableObject {
                 print("No output in response")
                 return (nil, nil)
             }
-            
         } catch {
             print("Network/decode error:", error)
             return (nil, nil)
         }
     }
     
- 
+    /// Create a new folder under a container
     func createFolder(
             tcEndpointUrl: String,
             name: String,
@@ -625,19 +620,19 @@ class TeamcenterAPIService: ObservableObject {
             containerClassName: String,
             containerType: String
     ) async -> (uid: String?, className: String?, type: String?) {
-        // 1. Make sure we have a session cookie
+        // 1. Ensure login
         guard let session = jsessionId else {
             print("No JSESSIONID—please login first.")
             return (nil, nil, nil)
         }
 
-        // 2. Build the endpoint URL
+        // 2. Build URL
         guard let url = URL(string: tcEndpointUrl) else {
             print("Invalid URL:", tcEndpointUrl)
             return (nil, nil, nil)
         }
 
-        // 3. Build the JSON payload
+        // 3. Build create-folder payload
         let payload: [String: Any] = [
             "header": ["state": [:], "policy": [:]],
             "body": [
@@ -655,7 +650,7 @@ class TeamcenterAPIService: ObservableObject {
             ]
         ]
 
-        // 4. Serialize to JSON data
+        // 4. Serialize JSON
         let jsonData: Data
         do {
             jsonData = try JSONSerialization.data(withJSONObject: payload)
@@ -664,7 +659,7 @@ class TeamcenterAPIService: ObservableObject {
             return (nil, nil, nil)
         }
 
-        // 5. Create and send the POST request
+        // 5. Build POST request
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -672,6 +667,7 @@ class TeamcenterAPIService: ObservableObject {
         request.httpBody = jsonData
 
         do {
+            // 6. Send request and check status
             let (data, response) = try await URLSession.shared.data(for: request)
             guard let http = response as? HTTPURLResponse,
                     (200...299).contains(http.statusCode) else {
@@ -679,11 +675,11 @@ class TeamcenterAPIService: ObservableObject {
                 return (nil, nil, nil)
             }
 
-            // 6. Decode only the "output" array
+            // 7. Decode CreateFoldersResponse
             let decoder = JSONDecoder()
             let resp = try decoder.decode(CreateFoldersResponse.self, from: data)
 
-            // 7. Pull out the first folder entry
+            // 8. Return first folder info
             if let first = resp.output?.first?.folder {
                 return (first.uid, first.className, first.type)
             } else {
@@ -696,6 +692,4 @@ class TeamcenterAPIService: ObservableObject {
             return (nil, nil, nil)
         }
     }
-    
-
 }

@@ -5,250 +5,184 @@
 //  Created by Sedoykin Alexey on 03/06/2025.
 //
 
-// FolderSelectionView.swift
-
 import SwiftUI
 
-// Model for a folder item
-struct FolderItem: Identifiable, Equatable {
-    let id: String
-    let name: String
-    let className: String
-    let type: String
-}
-
 public struct HomeFolderContent: View {
-    // 1) Raw JSON data passed in
+    // MARK: - Input ---------------------------------------------------------
+    /// Raw response from Teamcenter REST (array of dictionaries).
     private let rawData: [[String: Any]]
-    
-    // Selected UIDs
+
+    // MARK: - UI state ------------------------------------------------------
+    // We keep both the *selected UID* *and* the last known metadata so that
+    // we can still show a name in the picker when the UID disappeared.
     @State private var selectedItemsUid: String
     @State private var selectedBomsUid: String
     @State private var selectedRequirementsUid: String
-    
-    // Saved metadata (name, className, type)
+
     @State private var savedItemsName: String
     @State private var savedItemsClassName: String
     @State private var savedItemsType: String
-    
+
     @State private var savedBomsName: String
     @State private var savedBomsClassName: String
     @State private var savedBomsType: String
-    
+
     @State private var savedRequirementsName: String
     @State private var savedRequirementsClassName: String
     @State private var savedRequirementsType: String
-    
-    // 5) Only keep items where className == "Folder"
+
+    // MARK: - Derived folders list -----------------------------------------
+    /// We only care about objects whose `className` is exactly "Folder".
     private var folders: [FolderItem] {
         rawData.compactMap { dict in
             guard
-                let className = dict["className"] as? String,
-                className == "Folder",
-                let uid = dict["uid"] as? String,
+                let className = dict["className"] as? String, className == "Folder",
+                let uid  = dict["uid"] as? String,
                 let name = dict["object_name"] as? String,
                 let type = dict["type"] as? String
             else { return nil }
             return FolderItem(id: uid, name: name, className: className, type: type)
         }
     }
-    
-    // MARK: - Initializer
+
+    // MARK: - Init ----------------------------------------------------------
     public init(rawData: [[String: Any]]) {
         self.rawData = rawData
-        
-        // load saved UIDs
-        let itemsUid  = SettingsManager.shared.itemsFolderUid
-        let bomsUid   = SettingsManager.shared.bomsFolderUid
-        let reqUid    = SettingsManager.shared.requirementsFolderUid
-        
-        // load saved names, classNames, types
-        let itemsName      = SettingsManager.shared.itemsFolderName
-        let itemsClassName = SettingsManager.shared.itemsFolderClassName
-        let itemsType      = SettingsManager.shared.itemsFolderType
-        
-        let bomsName      = SettingsManager.shared.bomsFolderName
-        let bomsClassName = SettingsManager.shared.bomsFolderClassName
-        let bomsType      = SettingsManager.shared.bomsFolderType
-        
-        let reqName      = SettingsManager.shared.requirementsFolderName
-        let reqClassName = SettingsManager.shared.requirementsFolderClassName
-        let reqType      = SettingsManager.shared.requirementsFolderType
-        
-        // initialize @State
-        _selectedItemsUid         = State(initialValue: itemsUid)
-        _selectedBomsUid          = State(initialValue: bomsUid)
-        _selectedRequirementsUid  = State(initialValue: reqUid)
-        
-        _savedItemsName           = State(initialValue: itemsName)
-        _savedItemsClassName      = State(initialValue: itemsClassName)
-        _savedItemsType           = State(initialValue: itemsType)
-        
-        _savedBomsName            = State(initialValue: bomsName)
-        _savedBomsClassName       = State(initialValue: bomsClassName)
-        _savedBomsType            = State(initialValue: bomsType)
-        
-        _savedRequirementsName    = State(initialValue: reqName)
-        _savedRequirementsClassName = State(initialValue: reqClassName)
-        _savedRequirementsType      = State(initialValue: reqType)
+        // Load persisted choices from SettingsManager ----------------------
+        let s = SettingsManager.shared
+
+        _selectedItemsUid        = State(initialValue: s.itemsFolderUid)
+        _selectedBomsUid         = State(initialValue: s.bomsFolderUid)
+        _selectedRequirementsUid = State(initialValue: s.requirementsFolderUid)
+
+        _savedItemsName       = State(initialValue: s.itemsFolderName)
+        _savedItemsClassName  = State(initialValue: s.itemsFolderClassName)
+        _savedItemsType       = State(initialValue: s.itemsFolderType)
+
+        _savedBomsName       = State(initialValue: s.bomsFolderName)
+        _savedBomsClassName  = State(initialValue: s.bomsFolderClassName)
+        _savedBomsType       = State(initialValue: s.bomsFolderType)
+
+        _savedRequirementsName      = State(initialValue: s.requirementsFolderName)
+        _savedRequirementsClassName = State(initialValue: s.requirementsFolderClassName)
+        _savedRequirementsType      = State(initialValue: s.requirementsFolderType)
     }
-    
+
+    // MARK: - View ----------------------------------------------------------
     public var body: some View {
         HStack(spacing: 20) {
-            makeColumn(
-                title: "Items",
-                selection: $selectedItemsUid,
-                savedName: savedItemsName
-            ) { newUid in
-                onSelect(
-                    newUid: newUid,
-                    savedName: &savedItemsName,
-                    savedClassName: &savedItemsClassName,
-                    savedType: &savedItemsType,
-                    uidKeyPath: \.itemsFolderUid,
-                    nameKeyPath: \.itemsFolderName,
-                    classKeyPath: \.itemsFolderClassName,
-                    typeKeyPath: \.itemsFolderType
-                )
+            // Column 1: Items -----------------------------------------------
+            makeColumn(title: "Items", selection: $selectedItemsUid, savedName: savedItemsName) { newUid in
+                onSelect(newUid: newUid,
+                         savedName: &savedItemsName, savedClassName: &savedItemsClassName, savedType: &savedItemsType,
+                         uidKeyPath: \.itemsFolderUid,
+                         nameKeyPath: \.itemsFolderName,
+                         classKeyPath: \.itemsFolderClassName,
+                         typeKeyPath: \.itemsFolderType)
             }
-            
-            makeColumn(
-                title: "BOM's",
-                selection: $selectedBomsUid,
-                savedName: savedBomsName
-            ) { newUid in
-                onSelect(
-                    newUid: newUid,
-                    savedName: &savedBomsName,
-                    savedClassName: &savedBomsClassName,
-                    savedType: &savedBomsType,
-                    uidKeyPath: \.bomsFolderUid,
-                    nameKeyPath: \.bomsFolderName,
-                    classKeyPath: \.bomsFolderClassName,
-                    typeKeyPath: \.bomsFolderType
-                )
+            // Column 2: BOMs -----------------------------------------------
+            makeColumn(title: "BOM's", selection: $selectedBomsUid, savedName: savedBomsName) { newUid in
+                onSelect(newUid: newUid,
+                         savedName: &savedBomsName, savedClassName: &savedBomsClassName, savedType: &savedBomsType,
+                         uidKeyPath: \.bomsFolderUid,
+                         nameKeyPath: \.bomsFolderName,
+                         classKeyPath: \.bomsFolderClassName,
+                         typeKeyPath: \.bomsFolderType)
             }
-            
-            makeColumn(
-                title: "Requirements",
-                selection: $selectedRequirementsUid,
-                savedName: savedRequirementsName
-            ) { newUid in
-                onSelect(
-                    newUid: newUid,
-                    savedName: &savedRequirementsName,
-                    savedClassName: &savedRequirementsClassName,
-                    savedType: &savedRequirementsType,
-                    uidKeyPath: \.requirementsFolderUid,
-                    nameKeyPath: \.requirementsFolderName,
-                    classKeyPath: \.requirementsFolderClassName,
-                    typeKeyPath: \.requirementsFolderType
-                )
+            // Column 3: Requirements ---------------------------------------
+            makeColumn(title: "Requirements", selection: $selectedRequirementsUid, savedName: savedRequirementsName) { newUid in
+                onSelect(newUid: newUid,
+                         savedName: &savedRequirementsName, savedClassName: &savedRequirementsClassName, savedType: &savedRequirementsType,
+                         uidKeyPath: \.requirementsFolderUid,
+                         nameKeyPath: \.requirementsFolderName,
+                         classKeyPath: \.requirementsFolderClassName,
+                         typeKeyPath: \.requirementsFolderType)
             }
         }
         .padding()
-        .onAppear(perform: validateSelections)
+        .onAppear(perform: validateSelections)    // Clean up stale selections
         .onChange(of: folders) {
-              // no parameters → folders has already updated
-              validateSelections()
-          }
+            validateSelections()
+        }  // Re‑validate when new data arrives
     }
-    
-    // Builds each VStack + Picker
-    private func makeColumn(title: String,
-                            selection: Binding<String>,
-                            savedName: String,
-                            onChange: @escaping (String) -> Void) -> some View
-    {
+
+    // MARK: - Column builder ------------------------------------------------
+    /// Builds a *single* column (title + picker) for Items, BOMs or Requirements.
+    private func makeColumn(title: String, selection: Binding<String>, savedName: String, onChange: @escaping (String) -> Void) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(title).font(.headline)
             Picker("", selection: selection) {
+                // 1) Show live folders
                 if !folders.isEmpty {
                     ForEach(folders) { f in Text(f.name).tag(f.id) }
+                    // 2) If the saved UID is missing from list, show it anyway so user can clear it.
                     if !savedName.isEmpty && !folders.contains(where: { $0.id == selection.wrappedValue }) {
                         Text(savedName).tag(selection.wrappedValue)
                     }
                 } else if !savedName.isEmpty {
+                    // No folders yet, but we still show the saved value
                     Text(savedName).tag(selection.wrappedValue)
                 }
             }
             .pickerStyle(PopUpButtonPickerStyle())
-            .onChange(of: selection.wrappedValue) { oldValue, newValue in
-                // call your handler with the fresh newValue
-                onChange(newValue)
-            }
+            .onChange(of: selection.wrappedValue) { _, newValue in onChange(newValue) }
         }
         .frame(maxWidth: .infinity)
     }
-    
-    // Unified selection handler
-    private func onSelect(
-        newUid: String,
-        savedName: inout String,
-        savedClassName: inout String,
-        savedType: inout String,
-        uidKeyPath: ReferenceWritableKeyPath<SettingsManager, String>,
-        nameKeyPath: ReferenceWritableKeyPath<SettingsManager, String>,
-        classKeyPath: ReferenceWritableKeyPath<SettingsManager, String>,
-        typeKeyPath: ReferenceWritableKeyPath<SettingsManager, String>
-    ) {
-        let settings = SettingsManager.shared
-        settings[keyPath: uidKeyPath] = newUid
-        
+
+    // MARK: - Unified selection handler ------------------------------------
+    /// Stores the new UID (or clears it) in SettingsManager and updates local @State copies.
+    private func onSelect(newUid: String,
+                          savedName: inout String, savedClassName: inout String, savedType: inout String,
+                          uidKeyPath: ReferenceWritableKeyPath<SettingsManager, String>,
+                          nameKeyPath: ReferenceWritableKeyPath<SettingsManager, String>,
+                          classKeyPath: ReferenceWritableKeyPath<SettingsManager, String>,
+                          typeKeyPath: ReferenceWritableKeyPath<SettingsManager, String>) {
+        let s = SettingsManager.shared
+        s[keyPath: uidKeyPath] = newUid
         if let folder = folders.first(where: { $0.id == newUid }) {
-            settings[keyPath: nameKeyPath]      = folder.name
-            settings[keyPath: classKeyPath]     = folder.className
-            settings[keyPath: typeKeyPath]      = folder.type
-            
-            savedName       = folder.name
-            savedClassName  = folder.className
-            savedType       = folder.type
+            // Save full metadata when UID exists
+            s[keyPath: nameKeyPath]  = folder.name
+            s[keyPath: classKeyPath] = folder.className
+            s[keyPath: typeKeyPath]  = folder.type
+            savedName      = folder.name
+            savedClassName = folder.className
+            savedType      = folder.type
         } else {
-            // clear if none
-            settings[keyPath: nameKeyPath]      = ""
-            settings[keyPath: classKeyPath]     = ""
-            settings[keyPath: typeKeyPath]      = ""
-            
-            savedName       = ""
-            savedClassName  = ""
-            savedType       = ""
+            // Clear when UID is empty or invalid
+            s[keyPath: nameKeyPath]  = ""
+            s[keyPath: classKeyPath] = ""
+            s[keyPath: typeKeyPath]  = ""
+            savedName = ""; savedClassName = ""; savedType = ""
         }
     }
-    
+
+    // MARK: - Helpers -------------------------------------------------------
+    /// If a previously saved UID is no longer present in `folders`, delete it.
     private func validateSelections() {
         guard !folders.isEmpty else { return }
-        let settings = SettingsManager.shared
-        
+        let s = SettingsManager.shared
+
         if !folders.contains(where: { $0.id == selectedItemsUid }) {
-            settings.itemsFolderUid = ""
-            settings.itemsFolderName = ""
-            settings.itemsFolderClassName = ""
-            settings.itemsFolderType = ""
-            selectedItemsUid = ""
-            savedItemsName = ""
-            savedItemsClassName = ""
-            savedItemsType = ""
+            s.itemsFolderUid = ""; s.itemsFolderName = ""; s.itemsFolderClassName = ""; s.itemsFolderType = ""
+            selectedItemsUid = ""; savedItemsName = ""; savedItemsClassName = ""; savedItemsType = ""
         }
         if !folders.contains(where: { $0.id == selectedBomsUid }) {
-            settings.bomsFolderUid = ""
-            settings.bomsFolderName = ""
-            settings.bomsFolderClassName = ""
-            settings.bomsFolderType = ""
-            selectedBomsUid = ""
-            savedBomsName = ""
-            savedBomsClassName = ""
-            savedBomsType = ""
+            s.bomsFolderUid = ""; s.bomsFolderName = ""; s.bomsFolderClassName = ""; s.bomsFolderType = ""
+            selectedBomsUid = ""; savedBomsName = ""; savedBomsClassName = ""; savedBomsType = ""
         }
         if !folders.contains(where: { $0.id == selectedRequirementsUid }) {
-            settings.requirementsFolderUid = ""
-            settings.requirementsFolderName = ""
-            settings.requirementsFolderClassName = ""
-            settings.requirementsFolderType = ""
-            selectedRequirementsUid = ""
-            savedRequirementsName = ""
-            savedRequirementsClassName = ""
-            savedRequirementsType = ""
+            s.requirementsFolderUid = ""; s.requirementsFolderName = ""; s.requirementsFolderClassName = ""; s.requirementsFolderType = ""
+            selectedRequirementsUid = ""; savedRequirementsName = ""; savedRequirementsClassName = ""; savedRequirementsType = ""
         }
     }
+}
+
+// Simple data holder for each folder row coming from the backend.
+struct FolderItem: Identifiable, Equatable {
+    let id: String       // Teamcenter UID
+    let name: String     // Display name
+    let className: String// Should be "Folder"
+    let type: String     // Folder subtype
 }
 
