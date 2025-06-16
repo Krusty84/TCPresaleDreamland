@@ -49,20 +49,51 @@ class SettingsManager {
     
     
     init() {
-          // Load initial data from UserDefaults
-          var array = defaults.stringArray(forKey: itemsListOfTypesKey) ?? []
-          
-          // Ensure "Item" exists at index 0
-          if !array.contains("Item") {
-              array.insert("Item", at: 0)
-              defaults.set(array, forKey: itemsListOfTypesKey)
-          }
-          
-          self.itemsListOfTypes_storage = array
-      }
+        // Load initial data from UserDefaults
+        var array = defaults.stringArray(forKey: itemsListOfTypesKey) ?? []
+        
+        // Ensure "Item" exists at index 0
+        if !array.contains("Item") {
+            array.insert("Item", at: 0)
+            defaults.set(array, forKey: itemsListOfTypesKey)
+        }
+        
+        self.itemsListOfTypes_storage = array
+    }
     
     // Default prompts
-    let defaultItemsPrompt = "Generate item entries from the provided list."
+    let defaultItemsPrompt = """
+    You are a domain expert who converts industry-specific items into perfect JSON format.
+    
+    EXAMPLE INPUT:
+    Domain: Automotive
+    Count: 2
+    
+    EXAMPLE JSON OUTPUT:
+    {
+        "items": [
+            {
+                "name": "Turbocharger",
+                "desc": "Boosts engine power via forced induction"
+            },
+            {
+                "name": "OBD-II Scanner",
+                "desc": "Reads vehicle diagnostic trouble codes"
+            }
+        ]
+    }
+    
+    ACTUAL TASK:
+    Generate a list of {count} real-world items related to the domain "{domainName}".
+    Rules:
+    1. Only use actual industry-standard terms
+    2. Descriptions must be 5–10 words
+    3. Maintain technical accuracy
+    
+    Generate now for:
+    Domain: {domainName}
+    Count: {count}
+    """
     let defaultItemsTemperature = 0.5
     let defaultItemsMaxTokens = 1000
     //
@@ -85,11 +116,11 @@ class SettingsManager {
     """
     let defaultBomTemperature = 0.5
     let defaultBomMaxTokens = 1000
-
+    
     let defaultReqSpecPrompt = "Generate a requirements specification based on the product details."
     let defaultReqSpecTemperature = 0.5
     let defaultReqSpecMaxTokens = 1000
-
+    
     var appLoggingEnabled: Bool {
         get { defaults.bool(forKey: appLoggingEnabledKey) }
         set { defaults.set(newValue, forKey: appLoggingEnabledKey) }
@@ -132,7 +163,7 @@ class SettingsManager {
         get { defaults.object(forKey: reqSpecTemperatureKey) as? Double ?? defaultReqSpecTemperature }
         set { defaults.set(newValue, forKey: reqSpecTemperatureKey) }
     }
-
+    
     var reqSpecMaxTokens: Int {
         get { defaults.object(forKey: reqSpecMaxTokensKey) as? Int ?? defaultReqSpecMaxTokens }
         set { defaults.set(newValue, forKey: reqSpecMaxTokensKey) }
@@ -147,7 +178,7 @@ class SettingsManager {
         get { defaults.object(forKey: itemsTemperatureKey) as? Double ?? defaultItemsTemperature }
         set { defaults.set(newValue, forKey: itemsTemperatureKey) }
     }
-
+    
     var itemsMaxTokens: Int {
         get { defaults.object(forKey: itemsMaxTokensKey) as? Int ?? defaultItemsMaxTokens }
         set { defaults.set(newValue, forKey: itemsMaxTokensKey) }
@@ -201,17 +232,17 @@ class SettingsManager {
     }
     
     @Published var itemsListOfTypes_storage: [String] {
-            didSet {
-                defaults.set(itemsListOfTypes_storage, forKey: itemsListOfTypesKey)
-            }
+        didSet {
+            defaults.set(itemsListOfTypes_storage, forKey: itemsListOfTypesKey)
         }
+    }
     
     var itemsListOfTypes: Binding<[String]> {
-          Binding<[String]>(
-              get:  { self.itemsListOfTypes_storage },
-              set:  { self.itemsListOfTypes_storage = $0 }
-          )
-      }
+        Binding<[String]>(
+            get:  { self.itemsListOfTypes_storage },
+            set:  { self.itemsListOfTypes_storage = $0 }
+        )
+    }
     
     var bomsFolderUid: String {
         get { defaults.string(forKey: bomsFolderUidKey) ?? "" }

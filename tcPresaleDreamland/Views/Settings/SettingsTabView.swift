@@ -31,7 +31,7 @@ struct SettingsTabContent: View {
             Group {
                 switch selectedTab {
                     case 0: generalSettingsTab
-                    case 1: llmPromptsTab.disabled(true)
+                    case 1: llmPromptsTab
                     case 2: teamcenterTab
                     default: EmptyView()
                 }
@@ -206,6 +206,7 @@ struct SettingsTabContent: View {
                                   systemImage: "list.bullet.rectangle",
                                   isExpanded: vm.isBOMSectionExpanded)
                 }
+                .disabled(true)
                 
                 // Req Spec Generation Section
                 DisclosureGroup(isExpanded: $vm.isReqSpecSectionExpanded) {
@@ -261,6 +262,7 @@ struct SettingsTabContent: View {
                                   systemImage: "doc.text.fill",
                                   isExpanded: vm.isReqSpecSectionExpanded)
                 }
+                .disabled(true)
             }
             .padding(16)
         }
