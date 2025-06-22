@@ -8,7 +8,7 @@
 import Foundation
 
 /// Response wrapper that matches the JSON produced by `llmHelper.generateItemsPrompt`.
-struct DeepSeekResponse: Codable {
+struct DeepSeektemsResponse: Codable {
     let items: [Item]
 }
 

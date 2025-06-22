@@ -92,7 +92,7 @@ class ItemsGeneratorViewModel: ObservableObject {
                     // Try decoding the JSON into our `DeepSeekResponse` struct.
                     if let data = cleanedContent.data(using: .utf8) {
                         do {
-                            let decodedResponse = try JSONDecoder().decode(DeepSeekResponse.self, from: data)
+                            let decodedResponse = try JSONDecoder().decode(DeepSeektemsResponse.self, from: data)
                             await MainActor.run { generatedItems = decodedResponse.items }
                         } catch {
                             await MainActor.run {

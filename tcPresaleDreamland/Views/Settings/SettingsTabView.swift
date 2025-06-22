@@ -206,8 +206,8 @@ struct SettingsTabContent: View {
                                   systemImage: "list.bullet.rectangle",
                                   isExpanded: vm.isBOMSectionExpanded)
                 }
-                .disabled(true)
                 
+    
                 // Req Spec Generation Section
                 DisclosureGroup(isExpanded: $vm.isReqSpecSectionExpanded) {
                     VStack(alignment: .leading, spacing: 8) {

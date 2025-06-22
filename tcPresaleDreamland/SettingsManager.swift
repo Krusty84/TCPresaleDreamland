@@ -64,11 +64,9 @@ class SettingsManager {
     // Default prompts
     let defaultItemsPrompt = """
     You are a domain expert who converts industry-specific items into perfect JSON format.
-    
     EXAMPLE INPUT:
     Domain: Automotive
     Count: 2
-    
     EXAMPLE JSON OUTPUT:
     {
         "items": [
@@ -82,15 +80,12 @@ class SettingsManager {
             }
         ]
     }
-    
-    ACTUAL TASK:
-    Generate a list of {count} real-world items related to the domain "{domainName}".
-    Rules:
+    RULES:
     1. Only use actual industry-standard terms
     2. Descriptions must be 5–10 words
     3. Maintain technical accuracy
-    
-    Generate now for:
+    ACTUAL TASK:
+    Generate a list of real-world items for:
     Domain: {domainName}
     Count: {count}
     """
@@ -98,21 +93,60 @@ class SettingsManager {
     let defaultItemsMaxTokens = 1000
     //
     let defaultBOMPrompt = """
-    Generate a Bill of Materials (BOM) for the specified product: [PRODUCT_NAME]. Return the BOM as a JSON object with the following structure: 
+    You are an engineering-domain expert who writes Engineering Bills of Material (eBOM) into perfect JSON format.
+    EXAMPLE INPUT:
+    Product: Turbocharger
+    Depth: 3
+    EXAMPLE JSON OUTPUT:
     {
-      "product": "[PRODUCT_NAME]",
-      "components": [
-        {
-          "part_name": string,
-          "part_number": string,
-          "quantity": number,
-          "material": string,
-          "description": string,
-          "supplier": string (optional)
+        "product": {
+            "name": "Turbocharger",
+            "desc": "Boosts engine power via forced induction",
+            "items": [
+                {
+                    "name": "Compressor section",
+                    "desc": "Draws and compresses intake air",
+                    "items": [
+                        {
+                            "name": "Compressor wheel",
+                            "desc": "Rotating aluminium impeller",
+                            "items": []
+                        },
+                        {
+                            "name": "Compressor housing",
+                            "desc": "Cast shell guiding airflow",
+                            "items": []
+                        }
+                    ]
+                },
+                {
+                    "name": "Turbine section",
+                    "desc": "Uses exhaust gas energy",
+                    "items": [
+                        {
+                            "name": "Turbine wheel",
+                            "desc": "High-temp nickel alloy rotor",
+                            "items": []
+                        },
+                        {
+                            "name": "Turbine housing",
+                            "desc": "Ducts exhaust to wheel",
+                            "items": []
+                        }
+                    ]
+                }
+            ]
         }
-      ]
     }
-    Ensure all components necessary for the assembly of [PRODUCT_NAME] are listed comprehensively.
+    RULES:
+    1. Use only real engineering part names
+    2. Each desc is 3–10 simple, accurate words
+    3. Keep nesting until Depth is reached
+    4. Return exactly one JSON object—no extra text, no comments
+    ACTUAL TASK:
+    Build the eBOM now for:
+    Product: {productName}
+    Depth: {depth}
     """
     let defaultBomTemperature = 0.5
     let defaultBomMaxTokens = 1000

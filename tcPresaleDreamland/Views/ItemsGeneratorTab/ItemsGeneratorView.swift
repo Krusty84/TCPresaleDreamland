@@ -29,62 +29,16 @@ struct ItemsGeneratorContent: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            // ---------- 1) Top controls ----------
-            HStack {
-                TextField("Domain", text: $vm.domainName)
-                    .textFieldStyle(RoundedBorderTextFieldStyle())
-                    .frame(width: 200)
-                    .help("Product (for example: airplane, transmitter)")
-
-                // (a) Item count stepper
-                HStack(spacing: 4) {
-                    Text("Count:")
-                    Stepper(
-                        value: Binding(
-                            get: { Int(vm.count) ?? 10 },
-                            set: { vm.count = "\($0)" }
-                        ),
-                        in: 1...1000,
-                        step: 1
-                    ) {
-                        Text("\(Int(vm.count) ?? 10)")
-                            .monospacedDigit()
-                            .frame(width: 60)
-                    }
-                }
-                .help("Expected number of generated items")
-                .frame(width: 140)
-
-                // (b) Temperature stepper
-                HStack(spacing: 4) {
-                    Text("Temperature:")
-                    Stepper(value: $vm.itemsTemperature, in: 0...1, step: 0.1) {
-                        Text("\(vm.itemsTemperature, specifier: "%.1f")")
-                            .monospacedDigit()
-                            .frame(width: 40)
-                    }
-                }
-                .help("Higher = more creative, but less accurate")
-                .frame(width: 200)
-
-                // (c) Tokens stepper
-                HStack(spacing: 4) {
-                    Text("Tokens:")
-                    Stepper(value: $vm.itemsMaxTokens, in: 100...4000, step: 100) {
-                        Text("\(vm.itemsMaxTokens)")
-                            .monospacedDigit()
-                            .frame(width: 50)
-                    }
-                }
-                .help("Maximum tokens the model can return")
-                .frame(width: 160)
-
-                // (d) Generate button
-                Button("Generate Items") { vm.generateItems() }
-                    .help("Ask DeepSeek to generate a list of items")
-                    .disabled(vm.isLoading || vm.domainName.isEmpty)
-            }
-            .padding()
+            CallLLMView(
+                domainName:   $vm.domainName,
+                countText:    $vm.count,
+                temperature:  $vm.itemsTemperature,
+                maxTokens:    $vm.itemsMaxTokens,
+                isLoading:    vm.isLoading,
+                generateAction: vm.generateItems,
+                generateButtonLabel: "Generate Items",
+                generateButtonHelp: "Ask DeepSeek to generate a list of items"
+            ) .padding()
 
             Divider()
 

@@ -47,34 +47,18 @@ class LLMHelpers:ObservableObject {
     func generateItemsPrompt(domainName: String, count: String) -> String {
         // read from AppStorage
         let template = SettingsManager.shared.itemsPrompt
-
-        // replace placeholders
         return template
             .replacingOccurrences(of: "{domainName}", with: domainName)
             .replacingOccurrences(of: "{count}",      with: count)
     }
     
-    func generateBOMPrompt(for productName: String) -> String {
-        return """
-        Generate a Bill of Materials (BOM) for the specified product: \(productName). Return the BOM as a JSON object with the following structure: 
-        {
-          "product": "\(productName)",
-          "components": [
-            {
-              "part_name": string,
-              "part_number": string,
-              "quantity": number,
-              "material": string,
-              "description": string,
-              "supplier": string (optional)
-            }
-          ]
-        }
-        Ensure all components necessary for the assembly of \(productName) are listed comprehensively.
-        """
+    func generateBOMPrompt(productName: String, count: String) -> String {
+        // read from AppStorage
+        let template = SettingsManager.shared.bomPrompt   // add this key in your SettingsManager
+        return template
+            .replacingOccurrences(of: "{productName}", with: productName)
+            .replacingOccurrences(of: "{depth}",       with: count)
     }
 
     
 }
-
-
