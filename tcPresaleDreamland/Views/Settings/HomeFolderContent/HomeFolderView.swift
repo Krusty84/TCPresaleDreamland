@@ -52,16 +52,16 @@ public struct HomeFolderContent: View {
         let s = SettingsManager.shared
 
         _selectedItemsUid        = State(initialValue: s.itemsFolderUid)
-        _selectedBomsUid         = State(initialValue: s.bomsFolderUid)
+        _selectedBomsUid         = State(initialValue: s.bomFolderUid)
         _selectedRequirementsUid = State(initialValue: s.requirementsFolderUid)
 
         _savedItemsName       = State(initialValue: s.itemsFolderName)
         _savedItemsClassName  = State(initialValue: s.itemsFolderClassName)
         _savedItemsType       = State(initialValue: s.itemsFolderType)
 
-        _savedBomsName       = State(initialValue: s.bomsFolderName)
-        _savedBomsClassName  = State(initialValue: s.bomsFolderClassName)
-        _savedBomsType       = State(initialValue: s.bomsFolderType)
+        _savedBomsName       = State(initialValue: s.bomFolderName)
+        _savedBomsClassName  = State(initialValue: s.bomFolderClassName)
+        _savedBomsType       = State(initialValue: s.bomFolderType)
 
         _savedRequirementsName      = State(initialValue: s.requirementsFolderName)
         _savedRequirementsClassName = State(initialValue: s.requirementsFolderClassName)
@@ -84,10 +84,10 @@ public struct HomeFolderContent: View {
             makeColumn(title: "BOM's", selection: $selectedBomsUid, savedName: savedBomsName) { newUid in
                 onSelect(newUid: newUid,
                          savedName: &savedBomsName, savedClassName: &savedBomsClassName, savedType: &savedBomsType,
-                         uidKeyPath: \.bomsFolderUid,
-                         nameKeyPath: \.bomsFolderName,
-                         classKeyPath: \.bomsFolderClassName,
-                         typeKeyPath: \.bomsFolderType)
+                         uidKeyPath: \.bomFolderUid,
+                         nameKeyPath: \.bomFolderName,
+                         classKeyPath: \.bomFolderClassName,
+                         typeKeyPath: \.bomFolderType)
             }
             // Column 3: Requirements ---------------------------------------
             makeColumn(title: "Requirements", selection: $selectedRequirementsUid, savedName: savedRequirementsName) { newUid in
@@ -168,7 +168,7 @@ public struct HomeFolderContent: View {
             selectedItemsUid = ""; savedItemsName = ""; savedItemsClassName = ""; savedItemsType = ""
         }
         if !folders.contains(where: { $0.id == selectedBomsUid }) {
-            s.bomsFolderUid = ""; s.bomsFolderName = ""; s.bomsFolderClassName = ""; s.bomsFolderType = ""
+            s.bomFolderUid = ""; s.bomFolderName = ""; s.bomFolderClassName = ""; s.bomFolderType = ""
             selectedBomsUid = ""; savedBomsName = ""; savedBomsClassName = ""; savedBomsType = ""
         }
         if !folders.contains(where: { $0.id == selectedRequirementsUid }) {

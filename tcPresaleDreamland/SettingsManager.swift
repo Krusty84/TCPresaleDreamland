@@ -37,28 +37,36 @@ class SettingsManager {
     private let itemsFolderTypeKey = "com.krusty84.settings.itemsFolderType"
     private let itemsListOfTypesKey = "com.krusty84.settings.itemsListOfTypes"
     //
-    private let bomsFolderUidKey = "com.krusty84.settings.bomsFolderUid"
-    private let bomsFolderNameKey = "com.krusty84.settings.bomsFolderName"
-    private let bomsFolderClassNameKey = "com.krusty84.settings.bomsFolderClassName"
-    private let bomsFolderTypeKey = "com.krusty84.settings.bomsFolderType"
+    private let bomFolderUidKey = "com.krusty84.settings.bomFolderUid"
+    private let bomFolderNameKey = "com.krusty84.settings.bomFolderName"
+    private let bomFolderClassNameKey = "com.krusty84.settings.bomFolderClassName"
+    private let bomFolderTypeKey = "com.krusty84.settings.bomFolderType"
+    private let bomListOfTypesKey = "com.krusty84.settings.bomListOfTypes"
     //
-    private let requirementsFolderUidKey = "com.krusty84.settings.settings.requirementsFolderUid"
-    private let requirementsFolderNameKey = "com.krusty84.settings.requirementsFolderName"
-    private let requirementsFolderClassNameKey = "com.krusty84.settings.requirementsFolderClassName"
-    private let requirementsFolderTypeKey = "com.krusty84.settings.requirementsFolderType"
+    private let requirementFolderUidKey = "com.krusty84.settings.settings.requirementFolderUid"
+    private let requirementFolderNameKey = "com.krusty84.settings.requirementFolderName"
+    private let requirementFolderClassNameKey = "com.krusty84.settings.requirementFolderClassName"
+    private let requirementFolderTypeKey = "com.krusty84.settings.requirementFolderType"
     
     
     init() {
         // Load initial data from UserDefaults
-        var array = defaults.stringArray(forKey: itemsListOfTypesKey) ?? []
+        var arrayItemsType = defaults.stringArray(forKey: itemsListOfTypesKey) ?? []
+        var arrayBomType = defaults.stringArray(forKey: bomListOfTypesKey) ?? []
         
         // Ensure "Item" exists at index 0
-        if !array.contains("Item") {
-            array.insert("Item", at: 0)
-            defaults.set(array, forKey: itemsListOfTypesKey)
+        if !arrayItemsType.contains("Item") {
+            arrayItemsType.insert("Item", at: 0)
+            defaults.set(arrayItemsType, forKey: itemsListOfTypesKey)
         }
         
-        self.itemsListOfTypes_storage = array
+        if !arrayBomType.contains("Item") {
+            arrayBomType.insert("Item", at: 0)
+            defaults.set(arrayBomType, forKey: itemsListOfTypesKey)
+        }
+        
+        self.itemsListOfTypes_storage = arrayItemsType
+        self.bomListOfTypes_storage = arrayBomType
     }
     
     // Default prompts
@@ -278,37 +286,50 @@ class SettingsManager {
         )
     }
     
-    var bomsFolderUid: String {
-        get { defaults.string(forKey: bomsFolderUidKey) ?? "" }
-        set { defaults.set(newValue, forKey: bomsFolderUidKey) }
+    var bomFolderUid: String {
+        get { defaults.string(forKey: bomFolderUidKey) ?? "" }
+        set { defaults.set(newValue, forKey: bomFolderUidKey) }
     }
-    var bomsFolderName: String {
-        get { defaults.string(forKey: bomsFolderNameKey) ?? "" }
-        set { defaults.set(newValue, forKey: bomsFolderNameKey) }
+    var bomFolderName: String {
+        get { defaults.string(forKey: bomFolderNameKey) ?? "" }
+        set { defaults.set(newValue, forKey: bomFolderNameKey) }
     }
-    var bomsFolderClassName: String {
-        get { defaults.string(forKey: bomsFolderClassNameKey) ?? "" }
-        set { defaults.set(newValue, forKey: bomsFolderClassNameKey) }
+    var bomFolderClassName: String {
+        get { defaults.string(forKey: bomFolderClassNameKey) ?? "" }
+        set { defaults.set(newValue, forKey: bomFolderClassNameKey) }
     }
-    var bomsFolderType: String {
-        get { defaults.string(forKey: bomsFolderTypeKey) ?? "" }
-        set { defaults.set(newValue, forKey: bomsFolderTypeKey) }
+    var bomFolderType: String {
+        get { defaults.string(forKey: bomFolderTypeKey) ?? "" }
+        set { defaults.set(newValue, forKey: bomFolderTypeKey) }
+    }
+    
+    @Published var bomListOfTypes_storage: [String] {
+        didSet {
+            defaults.set(bomListOfTypes_storage, forKey: bomListOfTypesKey)
+        }
+    }
+    
+    var bomListOfTypes: Binding<[String]> {
+        Binding<[String]>(
+            get:  { self.bomListOfTypes_storage },
+            set:  { self.bomListOfTypes_storage = $0 }
+        )
     }
     
     var requirementsFolderUid: String {
-        get { defaults.string(forKey: requirementsFolderUidKey) ?? "" }
-        set { defaults.set(newValue, forKey: requirementsFolderUidKey) }
+        get { defaults.string(forKey: requirementFolderUidKey) ?? "" }
+        set { defaults.set(newValue, forKey: requirementFolderUidKey) }
     }
     var requirementsFolderName: String {
-        get { defaults.string(forKey: requirementsFolderNameKey) ?? "" }
-        set { defaults.set(newValue, forKey: requirementsFolderNameKey) }
+        get { defaults.string(forKey: requirementFolderNameKey) ?? "" }
+        set { defaults.set(newValue, forKey: requirementFolderNameKey) }
     }
     var requirementsFolderClassName: String {
-        get { defaults.string(forKey: requirementsFolderClassNameKey) ?? "" }
-        set { defaults.set(newValue, forKey: requirementsFolderClassNameKey) }
+        get { defaults.string(forKey: requirementFolderClassNameKey) ?? "" }
+        set { defaults.set(newValue, forKey: requirementFolderClassNameKey) }
     }
     var requirementsFolderType: String {
-        get { defaults.string(forKey: requirementsFolderTypeKey) ?? "" }
-        set { defaults.set(newValue, forKey: requirementsFolderTypeKey) }
+        get { defaults.string(forKey: requirementFolderTypeKey) ?? "" }
+        set { defaults.set(newValue, forKey: requirementFolderTypeKey) }
     }
 }

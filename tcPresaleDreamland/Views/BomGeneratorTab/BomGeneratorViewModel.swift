@@ -32,7 +32,7 @@ class BomGeneratorViewModel: ObservableObject {
     // MARK: - Generation parameters (bind to Steppers)
     @Published var bomTemperature: Double        // 0 → deterministic, 1 → very creative
     @Published var bomMaxTokens: Int             // LLM token limit
-    @Published var itemTypes: [String] = []        // Allowed Teamcenter item types
+    @Published var itemTypes: [String] = []      // Allowed Teamcenter item types
 
     // MARK: - Core Data context
     private let dataStorageContext: NSManagedObjectContext
@@ -44,11 +44,11 @@ class BomGeneratorViewModel: ObservableObject {
         // Initialize from persistent SettingsManager so we keep user choices.
         self.bomTemperature = SettingsManager.shared.bomTemperature
         self.bomMaxTokens   = SettingsManager.shared.bomMaxTokens
-        self.itemTypes        = SettingsManager.shared.itemsListOfTypes_storage //TODO: change it
+        self.itemTypes        = SettingsManager.shared.bomListOfTypes_storage
         self.dataStorageContext = persistenceController
 
         // Keep `itemTypes` in sync with SettingsManager at runtime.
-        SettingsManager.shared.$itemsListOfTypes_storage
+        SettingsManager.shared.$bomListOfTypes_storage
             .sink { [weak self] newTypes in
                 self?.itemTypes = newTypes
             }
@@ -187,19 +187,19 @@ class BomGeneratorViewModel: ObservableObject {
         var results: [BOMCreationResult] = []
         self.containerFolderUid = containerUid  // So the UI can show *Open in TC* button.
 
-//        for item in generatedBOMs where item.isEnabled {
-//            let (newUid, newRev) = await tcApi.createItem(
-//                tcEndpointUrl: APIConfig.tcCreateItem(tcUrl: SettingsManager.shared.tcURL),
-//                name:          item.name,
-//                type:          item.type,
-//                description:   item.desc,
-//                containerUid:  containerUid,
-//                containerClassName: containerCls,
-//                containerType: containerTyp
-//            )
-//            let didSucceed = (newUid != nil && newRev != nil)
-//            results.append(.init(itemName: item.name, success: didSucceed))
-//        }
+        for item in generatedBOM where item.isEnabled {
+            let (newUid, newRev) = await tcApi.createItem(
+                tcEndpointUrl: APIConfig.tcCreateItem(tcUrl: SettingsManager.shared.tcURL),
+                name:          item.name,
+                type:          item.type,
+                description:   item.desc,
+                containerUid:  containerUid,
+                containerClassName: containerCls,
+                containerType: containerTyp
+            )
+            let didSucceed = (newUid != nil && newRev != nil)
+            //results.append(.init(itemName: item.name, success: didSucceed))
+        }
 
         return results
     }
@@ -240,4 +240,15 @@ class BomGeneratorViewModel: ObservableObject {
            // start recursion from the root list
            _ = recurse(&generatedBOM)
        }
+    
+    func updateAllItemTypes(to newType: String) {
+        func recursivelyUpdateTypes(items: inout [BOMItem]) {
+            for index in items.indices {
+                items[index].type = newType
+                recursivelyUpdateTypes(items: &items[index].items)
+            }
+        }
+        
+        recursivelyUpdateTypes(items: &generatedBOM)
+    }
 }

@@ -364,8 +364,8 @@ struct SettingsTabContent: View {
                         VStack(spacing: 4) {
                             Text("BOM's").font(.headline)
                             // .foregroundColor(.secondary)
-                           ListEditorView(items: SettingsManager.shared.itemsListOfTypes).frame(maxWidth: .infinity)
-                        }.disabled(true)
+                           ListEditorView(items: SettingsManager.shared.bomListOfTypes).frame(maxWidth: .infinity)
+                        }
                         
                         // Column C
                         VStack(spacing: 4) {
