@@ -39,13 +39,13 @@ class ItemsGeneratorViewModel: ObservableObject {
 
     // MARK: - Init
     init(
-        persistenceController: NSManagedObjectContext = PersistenceControllerGeneratedItemsData.shared.container.viewContext
+        storageController: NSManagedObjectContext = StorageController.shared.container.viewContext
     ) {
         // Initialize from persistent SettingsManager so we keep user choices.
         self.itemsTemperature = SettingsManager.shared.itemsTemperature
         self.itemsMaxTokens   = SettingsManager.shared.itemsMaxTokens
         self.itemTypes        = SettingsManager.shared.itemsListOfTypes_storage
-        self.dataStorageContext = persistenceController
+        self.dataStorageContext = storageController
 
         // Keep `itemTypes` in sync with SettingsManager at runtime.
         SettingsManager.shared.$itemsListOfTypes_storage

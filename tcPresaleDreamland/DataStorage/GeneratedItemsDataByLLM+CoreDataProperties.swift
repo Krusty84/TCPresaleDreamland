@@ -2,7 +2,7 @@
 //  GeneratedItemsDataByLLM+CoreDataProperties.swift
 //  tcPresaleDreamland
 //
-//  Created by Sedoykin Alexey on 09/06/2025.
+//  Created by Sedoykin Alexey on 27/06/2025.
 //
 //
 

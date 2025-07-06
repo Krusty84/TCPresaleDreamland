@@ -28,7 +28,7 @@ struct MainWindow: View {
             }
             TabItem(title: "History", icon: .system(name: "clock"))
             {
-                HistoryContent(vmItemsGeneratorViewModel: itemsGeneratorVM)
+                HistoryContent(vmItemsGeneratorViewModel: itemsGeneratorVM, vmBOMGeneratorViewModel: bomGeneratorVM)
             }
             TabItem(title: "Settings", icon: .system(name: "gearshape.fill")) {
                 SettingsTabContent()

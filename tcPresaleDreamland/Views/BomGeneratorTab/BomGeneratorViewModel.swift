@@ -39,13 +39,13 @@ class BomGeneratorViewModel: ObservableObject {
 
     // MARK: - Init
     init(
-        persistenceController: NSManagedObjectContext = PersistenceControllerGeneratedItemsData.shared.container.viewContext
+        storageController: NSManagedObjectContext = StorageController.shared.container.viewContext
     ) {
         // Initialize from persistent SettingsManager so we keep user choices.
         self.bomTemperature = SettingsManager.shared.bomTemperature
         self.bomMaxTokens   = SettingsManager.shared.bomMaxTokens
         self.itemTypes        = SettingsManager.shared.bomListOfTypes_storage
-        self.dataStorageContext = persistenceController
+        self.dataStorageContext = storageController
 
         // Keep `itemTypes` in sync with SettingsManager at runtime.
         SettingsManager.shared.$bomListOfTypes_storage
@@ -118,7 +118,7 @@ class BomGeneratorViewModel: ObservableObject {
     /// We call this after the user presses *Save to History*.
     func saveGeneratedBOMToHistory() async {
         await dataStorageContext.perform {
-            let record = GeneratedItemsDataByLLM(context: self.dataStorageContext)
+            let record = GeneratedBOMDataByLLM(context: self.dataStorageContext)
             record.id        = UUID()       // Unique ID for this batch
             record.name      = self.domainName
             record.timestamp = Date()
