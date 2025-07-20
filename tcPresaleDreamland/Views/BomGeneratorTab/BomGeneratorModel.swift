@@ -44,7 +44,7 @@ struct BOM: Codable {
 }
 
 /// Result returned after attempting to create the whole BOM in Teamcenter.
-struct BOMCreationResult {
+struct BOMCreationResult_OLD {
     let productName: String
     let success: Bool
 }

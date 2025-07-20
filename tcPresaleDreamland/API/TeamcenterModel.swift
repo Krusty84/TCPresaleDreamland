@@ -194,3 +194,152 @@ struct CreateFoldersResponse: Codable {
         case output
     }
 }
+
+// MARK: Codable models for getItemFromId response
+
+/// Top-level response for getItemFromId API
+struct GetItemFromIdResponse: Codable {
+    let qName: String?                 // e.g. "...GetItemFromIdResponse"
+    let output: [GetItemFromIdOutput]? // Array of item + revision outputs
+
+    enum CodingKeys: String, CodingKey {
+        case qName = ".QName"
+        case output
+    }
+}
+
+/// One entry of item + its revisions
+struct GetItemFromIdOutput: Codable {
+    let item: FolderBasic            // Reuses FolderBasic (uid, className, type)
+    let itemRevOutput: [ItemRevOutput]
+
+    enum CodingKeys: String, CodingKey {
+        case item
+        case itemRevOutput
+    }
+}
+
+/// Wrapper for the revision inside GetItemFromIdOutput
+struct ItemRevOutput: Codable {
+    let itemRevision: FolderBasic    // uid, className, type
+}
+
+// MARK: Codable models for createBOMWindows response
+
+/// Top-level response for CreateBOMWindows API
+struct CreateBOMWindowsResponse: Codable {
+    let qName: String?                        // e.g. "...CreateBOMWindowsResponse"
+    let output: [CreateBOMWindowsOutput]?     // List of outputs
+
+    enum CodingKeys: String, CodingKey {
+        case qName = ".QName"
+        case output
+    }
+}
+
+/// One output entry with window and line
+struct CreateBOMWindowsOutput: Codable {
+    let clientId: String                      // Echoed clientId
+    let bomWindow: FolderBasic                // UID, className, type of BOMWindow
+    let bomLine: FolderBasic                  // UID, className, type of BOMLine
+}
+
+// MARK: Codable models for saveBOMWindows response
+
+/// Top-level for SaveBOMWindows API
+struct SaveBOMWindowsResponse: Codable {
+    let qName: String?                      // e.g. "...SaveBOMWindowsResponse"
+    let serviceData: SaveBOMWindowsServiceData
+
+    enum CodingKeys: String, CodingKey {
+        case qName = ".QName"
+        case serviceData = "ServiceData"
+    }
+}
+
+/// Holds the list of updated UIDs and any returned objects
+struct SaveBOMWindowsServiceData: Codable {
+    let updated: [String]                   // UIDs of updated objects
+    let modelObjects: [String: ModelObject] // Map of UID → full object info
+
+    enum CodingKeys: String, CodingKey {
+        case updated
+        case modelObjects = "modelObjects"
+    }
+}
+
+
+// MARK: Codable models for closeBOMWindows response
+
+/// Top-level response for CloseBOMWindows API
+struct CloseBOMWindowsResponse: Codable {
+    let qName: String?                          // e.g. "...CloseBOMWindowsResponse"
+    let serviceData: CloseBOMWindowsServiceData // decoded from "ServiceData"
+
+    enum CodingKeys: String, CodingKey {
+        case qName = ".QName"
+        case serviceData = "ServiceData"
+    }
+}
+
+/// Holds the list of deleted BOM window UIDs
+struct CloseBOMWindowsServiceData: Codable {
+    let deleted: [String]
+}
+
+// MARK: Codable models for addOrUpdateChildrenToParentLine response
+
+/// Top-level response for AddOrUpdateChildrenToParentLine API
+struct AddOrUpdateChildrenToParentLineResponse: Codable {
+    let qName: String?                                 // XML QName
+    let itemLines: [ItemLine]?                         // Updated or created child lines
+    let itemelementLines: [ItemElementLine]?           // Updated or created element‐lines
+    let serviceData: AddOrUpdateChildrenServiceData?   // Created/updated UIDs & errors
+
+    enum CodingKeys: String, CodingKey {
+        case qName    = ".QName"
+        case itemLines
+        case itemelementLines
+        case serviceData = "ServiceData"
+    }
+}
+
+/// One BOM‐line entry in the response
+struct ItemLine: Codable {
+    let clientId: String
+    let bomline: FolderBasic
+}
+
+/// One element‐line entry (if any) in the response
+struct ItemElementLine: Codable {
+    let clientId: String
+    let itemelementLine: FolderBasic
+}
+
+/// ServiceData with created/updated UIDs and any partial errors
+struct AddOrUpdateChildrenServiceData: Codable {
+    let updated: [String]?
+    let created: [String]?
+    let modelObjects: [String: FolderBasic]?
+    let partialErrors: [PartialError]?
+
+    enum CodingKeys: String, CodingKey {
+        case updated, created, modelObjects, partialErrors
+    }
+}
+
+/// One error block for a single UID
+struct PartialError: Codable {
+    let uid: String
+    let errorValues: [ErrorValue]
+}
+
+/// Detailed error info
+struct ErrorValue: Codable {
+    let message: String
+    let code: Int
+    let level: Int
+}
+
+
+

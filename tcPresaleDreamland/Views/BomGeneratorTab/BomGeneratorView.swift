@@ -112,7 +112,7 @@ struct BomGeneratorContent: View {
                 },
                 pushToTCVoidAction: {
                     let report = await vm.createBOM()
-                    let failures = report.filter { !$0.success }.map(\.productName)
+                    let failures = report.filter { !$0.success }.map(\.itemName)
                     if !failures.isEmpty {
                         // TODO: Show alert with failures.
                     }

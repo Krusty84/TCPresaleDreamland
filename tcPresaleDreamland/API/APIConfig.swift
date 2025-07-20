@@ -35,5 +35,24 @@ struct APIConfig {
         return "\(tcUrl)/JsonRestServices/Core-2006-03-DataManagement/createFolders"
     }
     
+    static func getItemFromId(tcUrl: String) -> String {
+        return "\(tcUrl)/JsonRestServices/Core-2007-01-DataManagement/getItemFromId"
+    }
+    
+    static func createBOMWindows(tcUrl: String) -> String {
+        return "\(tcUrl)/JsonRestServices/Cad-2007-01-StructureManagement/createBOMWindows"
+    }
+    
+    static func addOrUpdateBOMLine(tcUrl: String) -> String {
+        return "\(tcUrl)/JsonRestServices/Bom-2008-06-StructureManagement/addOrUpdateChildrenToParentLine"
+    }
+    
+    static func saveBOMWindows(tcUrl: String) -> String {
+        return "\(tcUrl)/JsonRestServices/Cad-2008-06-StructureManagement/saveBOMWindows"
+    }
+    
+    static func closeBOMWindows(tcUrl: String) -> String {
+        return "\(tcUrl)/JsonRestServices/Cad-2007-01-StructureManagement/closeBOMWindows"
+    }
 
 }

@@ -613,25 +613,25 @@ class TeamcenterAPIService: ObservableObject {
     
     /// Create a new folder under a container
     func createFolder(
-            tcEndpointUrl: String,
-            name: String,
-            desc: String,
-            containerUid: String,
-            containerClassName: String,
-            containerType: String
+        tcEndpointUrl: String,
+        name: String,
+        desc: String,
+        containerUid: String,
+        containerClassName: String,
+        containerType: String
     ) async -> (uid: String?, className: String?, type: String?) {
         // 1. Ensure login
         guard let session = jsessionId else {
             print("No JSESSIONID—please login first.")
             return (nil, nil, nil)
         }
-
+        
         // 2. Build URL
         guard let url = URL(string: tcEndpointUrl) else {
             print("Invalid URL:", tcEndpointUrl)
             return (nil, nil, nil)
         }
-
+        
         // 3. Build create-folder payload
         let payload: [String: Any] = [
             "header": ["state": [:], "policy": [:]],
@@ -649,7 +649,7 @@ class TeamcenterAPIService: ObservableObject {
                 "relationType": "contents"
             ]
         ]
-
+        
         // 4. Serialize JSON
         let jsonData: Data
         do {
@@ -658,27 +658,27 @@ class TeamcenterAPIService: ObservableObject {
             print("JSON serialization error:", error)
             return (nil, nil, nil)
         }
-
+        
         // 5. Build POST request
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue("JSESSIONID=\(session)", forHTTPHeaderField: "Cookie")
         request.httpBody = jsonData
-
+        
         do {
             // 6. Send request and check status
             let (data, response) = try await URLSession.shared.data(for: request)
             guard let http = response as? HTTPURLResponse,
-                    (200...299).contains(http.statusCode) else {
+                  (200...299).contains(http.statusCode) else {
                 print("HTTP error creating folder:", response)
                 return (nil, nil, nil)
             }
-
+            
             // 7. Decode CreateFoldersResponse
             let decoder = JSONDecoder()
             let resp = try decoder.decode(CreateFoldersResponse.self, from: data)
-
+            
             // 8. Return first folder info
             if let first = resp.output?.first?.folder {
                 return (first.uid, first.className, first.type)
@@ -686,10 +686,409 @@ class TeamcenterAPIService: ObservableObject {
                 print("No folder info in response.")
                 return (nil, nil, nil)
             }
-
+            
         } catch {
             print("Network or decode error in createFolder:", error)
             return (nil, nil, nil)
         }
     }
+    
+    /// Fetch an item and its revision by itemId and revIds
+    func getItemFromId(
+        tcEndpointUrl: String,
+        itemId: String,
+        revIds: [String]
+    ) async -> (itemUid: String?, itemRevUid: String?) {
+        // 1) Make sure we have a session
+        guard let session = jsessionId else {
+            print("No JSESSIONID—login first.")
+            return (nil, nil)
+        }
+        
+        
+        
+        // 2) Build the URL
+        guard let url = URL(string: tcEndpointUrl) else {
+            print("Invalid URL:", tcEndpointUrl)
+            return (nil, nil)
+        }
+        
+        // 3) Build the JSON payload
+        let payload: [String: Any] = [
+            "header": ["state": [:], "policy": [:]],
+            "body": [
+                "infos": [
+                    [
+                        "itemId": itemId,
+                        "revIds": revIds
+                    ]
+                ],
+                "nRev": 1,
+                "pref": [:]
+            ]
+        ]
+        
+        // 4) Serialize payload
+        let jsonData: Data
+        do {
+            jsonData = try JSONSerialization.data(withJSONObject: payload)
+        } catch {
+            print("Failed to serialize JSON for getItemFromId:", error)
+            return (nil, nil)
+        }
+        
+        // 5) Build the request
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("JSESSIONID=\(session)", forHTTPHeaderField: "Cookie")
+        request.httpBody = jsonData
+        
+        do {
+            // 6) Send request
+            let (data, response) = try await URLSession.shared.data(for: request)
+            guard let http = response as? HTTPURLResponse,
+                  (200...299).contains(http.statusCode) else {
+                print("HTTP error in getItemFromId:", response)
+                return (nil, nil)
+            }
+            
+            // 7) Decode JSON
+            let decoder = JSONDecoder()
+            let resp = try decoder.decode(GetItemFromIdResponse.self, from: data)
+            
+            // 8) Pull out the first item + revision
+            if let first = resp.output?.first {
+                let itemUid = first.item.uid
+                let itemRevUid = first.itemRevOutput.first?.itemRevision.uid
+                return (itemUid, itemRevUid)
+            } else {
+                print("No output in getItemFromId response")
+                return (nil, nil)
+            }
+            
+        } catch {
+            print("Network or decode error in getItemFromId:", error)
+            return (nil, nil)
+        }
+    }
+    
+    /// Create BOM windows for an item using given revision rule info
+    func createBOMWindows(
+        tcEndpointUrl: String,
+        itemUid: String,
+        revRule: String,
+        unitNo: Int,
+        date: String,
+        today: Bool,
+        endItem: String,
+        endItemRevision: String
+    ) async -> (bomWindowUid: String?, bomLineUid: String?) {
+        // 1) Check login
+        guard let session = jsessionId else {
+            print("No JSESSIONID—please login first.")
+            return (nil, nil)
+        }
+        
+        // 2) Build URL
+        guard let url = URL(string: tcEndpointUrl) else {
+            print("Invalid URL:", tcEndpointUrl)
+            return (nil, nil)
+        }
+        
+        // 3) Build payload
+        let payload: [String: Any] = [
+            "header": [
+                "state": [
+                    "formatProperties": true,
+                    "stateless": true,
+                    "unloadObjects": false,
+                    "enableServerStateHeaders": true,
+                    "locale": "en_US"
+                ],
+                "policy": [:]
+            ],
+            "body": [
+                "info": [
+                    [
+                        "clientId": "",
+                        "item": itemUid,
+                        "revRuleConfigInfo": [
+                            "clientId": "",
+                            "revRule": revRule,
+                            "props": [
+                                "unitNo": unitNo,
+                                "date": date,
+                                "today": today,
+                                "endItem": endItem,
+                                "endItemRevision": endItemRevision
+                            ]
+                        ]
+                    ]
+                ]
+            ]
+        ]
+        
+        // 4) Serialize to JSON
+        let jsonData: Data
+        do {
+            jsonData = try JSONSerialization.data(withJSONObject: payload)
+        } catch {
+            print("JSON error for createBOMWindows:", error)
+            return (nil, nil)
+        }
+        
+        // 5) Build request
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("JSESSIONID=\(session)", forHTTPHeaderField: "Cookie")
+        request.httpBody = jsonData
+        
+        do {
+            // 6) Send request
+            let (data, response) = try await URLSession.shared.data(for: request)
+            guard let http = response as? HTTPURLResponse,
+                  (200...299).contains(http.statusCode) else {
+                print("HTTP error in createBOMWindows:", response)
+                return (nil, nil)
+            }
+            
+            // 7) Decode response
+            let decoder = JSONDecoder()
+            let resp = try decoder.decode(CreateBOMWindowsResponse.self, from: data)
+            
+            // 8) Return first window and line UIDs
+            if let first = resp.output?.first {
+                let windowUid = first.bomWindow.uid
+                let lineUid = first.bomLine.uid
+                return (windowUid, lineUid)
+            } else {
+                print("No output in createBOMWindows response")
+                return (nil, nil)
+            }
+            
+        } catch {
+            print("Network or decode error in createBOMWindows:", error)
+            return (nil, nil)
+        }
+    }
+    
+    /// Add or update child BOM lines under a parent line
+    func addOrUpdateChildrenToParentLine(
+        tcEndpointUrl: String,
+        parentLine: String,
+        createdItemRevUid: String
+    ) async -> AddOrUpdateChildrenToParentLineResponse? {
+        // 1) Ensure we’re logged in
+        guard let session = self.jsessionId else {
+            print("No JSESSIONID—please login first.")
+            return nil
+        }
+
+        // 2) Build URL
+        guard let url = URL(string: tcEndpointUrl) else {
+            print("Invalid URL:", tcEndpointUrl)
+            return nil
+        }
+
+        // 3) Build payload
+        let payload: [String: Any] = [
+            "header": [
+                "state": [
+                    "formatProperties": true,
+                    "stateless": true,
+                    "unloadObjects": false,
+                    "enableServerStateHeaders": true,
+                    "locale": "en_US"
+                ],
+                "policy": [:]
+            ],
+            "body": [
+                "inputs": [
+                    [
+                        "parentLine": parentLine,
+                        "viewType": "",
+                        "items": [
+                            [
+                                "clientId": "",
+                                "item": "",
+                                "itemRev": createdItemRevUid,
+                                "occType": "",
+                                "bomline": "",
+                                "itemLineProperties": [
+                                    "SampleStringKey": ""
+                                ]
+                            ]
+                        ],
+                        "itemElements": []
+                    ]
+                ]
+            ]
+        ]
+
+        // 4) Serialize payload
+        let jsonData: Data
+        do {
+            jsonData = try JSONSerialization.data(withJSONObject: payload)
+        } catch {
+            print("Failed to serialize JSON for addOrUpdateChildrenToParentLine:", error)
+            return nil
+        }
+
+        // 5) Build and send request
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("JSESSIONID=\(session)", forHTTPHeaderField: "Cookie")
+        request.httpBody = jsonData
+
+        do {
+            let (data, response) = try await URLSession.shared.data(for: request)
+            guard let http = response as? HTTPURLResponse,
+                  (200...299).contains(http.statusCode) else {
+                print("HTTP error in addOrUpdateChildrenToParentLine:", response)
+                return nil
+            }
+
+            // 6) Decode into our response type
+            let decoder = JSONDecoder()
+            let resp = try decoder.decode(AddOrUpdateChildrenToParentLineResponse.self, from: data)
+            return resp
+
+        } catch {
+            print("Network or decode error in addOrUpdateChildrenToParentLine:", error)
+            return nil
+        }
+    }
+
+    
+    /// Save one or more BOM windows on the server
+    func saveBOMWindows(
+        tcEndpointUrl: String,
+        bomWindows: [[String: Any]]
+    ) async -> SaveBOMWindowsServiceData? {
+        // 1) Check login
+        guard let session = jsessionId else {
+            print("No JSESSIONID—please login first.")
+            return nil
+        }
+        // 2) Build URL
+        guard let url = URL(string: tcEndpointUrl) else {
+            print("Invalid URL:", tcEndpointUrl)
+            return nil
+        }
+        // 3) Build payload
+        let payload: [String: Any] = [
+            "header": [
+                "state": [
+                    "formatProperties": true,
+                    "stateless": true,
+                    "unloadObjects": false,
+                    "enableServerStateHeaders": true,
+                    "locale": "en_US"
+                ],
+                "policy": [:]
+            ],
+            "body": [
+                "bomWindows": bomWindows
+            ]
+        ]
+        // 4) Serialize to JSON
+        let jsonData: Data
+        do {
+            jsonData = try JSONSerialization.data(withJSONObject: payload)
+        } catch {
+            print("JSON error for saveBOMWindows:", error)
+            return nil
+        }
+        // 5) Build request
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("JSESSIONID=\(session)", forHTTPHeaderField: "Cookie")
+        request.httpBody = jsonData
+        do {
+            // 6) Send request
+            let (data, response) = try await URLSession.shared.data(for: request)
+            guard let http = response as? HTTPURLResponse,
+                  (200...299).contains(http.statusCode) else {
+                print("HTTP error in saveBOMWindows:", response)
+                return nil
+            }
+            // 7) Decode response
+            let decoder = JSONDecoder()
+            let resp = try decoder.decode(SaveBOMWindowsResponse.self, from: data)
+            // 8) Return the serviceData (contains updated UIDs and modelObjects)
+            return resp.serviceData
+        } catch {
+            print("Network or decode error in saveBOMWindows:", error)
+            return nil
+        }
+    }
+    
+    /// Close one or more BOM windows on the server
+    func closeBOMWindows(
+        tcEndpointUrl: String
+    ) async -> [String]? {
+        // 1) Make sure we’re logged in
+        guard let session = jsessionId else {
+            print("No JSESSIONID—please login first.")
+            return nil
+        }
+        // 2) Build the URL
+        guard let url = URL(string: tcEndpointUrl) else {
+            print("Invalid URL:", tcEndpointUrl)
+            return nil
+        }
+        // 3) Build payload
+        let payload: [String: Any] = [
+            "header": [
+                "state": [
+                    "formatProperties": true,
+                    "stateless": true,
+                    "unloadObjects": false,
+                    "enableServerStateHeaders": true,
+                    "locale": "en_US"
+                ],
+                "policy": [:]
+            ],
+            "body": [
+                "bomWindows": []
+            ]
+        ]
+        // 4) Serialize to JSON
+        let jsonData: Data
+        do {
+            jsonData = try JSONSerialization.data(withJSONObject: payload)
+        } catch {
+            print("Failed to serialize JSON for closeBOMWindows:", error)
+            return nil
+        }
+        // 5) Build request
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("JSESSIONID=\(session)", forHTTPHeaderField: "Cookie")
+        request.httpBody = jsonData
+        
+        do {
+            // 6) Send request
+            let (data, response) = try await URLSession.shared.data(for: request)
+            guard let http = response as? HTTPURLResponse,
+                  (200...299).contains(http.statusCode) else {
+                print("HTTP error in closeBOMWindows:", response)
+                return nil
+            }
+            // 7) Decode response
+            let decoder = JSONDecoder()
+            let resp = try decoder.decode(CloseBOMWindowsResponse.self, from: data)
+            // 8) Return list of deleted UIDs
+            return resp.serviceData.deleted
+        } catch {
+            print("Network or decode error in closeBOMWindows:", error)
+            return nil
+        }
+    }
 }
+
