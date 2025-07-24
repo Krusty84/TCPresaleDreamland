@@ -317,7 +317,7 @@ class BomGeneratorViewModel: ObservableObject {
                     .map { ItemCreationResult(itemName: $0.name, success: false) }
             }
             print("✅ Created BOM container folder:", containerUid)
-            self.containerFolderUid = containerUid
+            
             // 3) Close any old BOM windows
             print("🧹 Closing existing BOM windows")
             let closed = await tcApi.closeBOMWindows(
@@ -427,6 +427,7 @@ class BomGeneratorViewModel: ObservableObject {
             let closed2 = await tcApi.closeBOMWindows(
                 tcEndpointUrl: APIConfig.closeBOMWindows(tcUrl: baseUrl)
             )
+            self.containerFolderUid = containerUid
             print("🔒 Closed windows:", closed2 ?? [])
             
             print("🏁 Finished BOM creation for", domainName)
