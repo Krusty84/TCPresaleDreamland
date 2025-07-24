@@ -148,7 +148,7 @@ class BomGeneratorViewModel: ObservableObject {
         }
     }
     
-    func createBOM() async -> [ItemCreationResult] {
+    func createBOM1() async -> [ItemCreationResult] {
         var results: [ItemCreationResult] = []
         let settings = SettingsManager.shared
         let baseUrl = settings.tcURL
@@ -272,6 +272,164 @@ class BomGeneratorViewModel: ObservableObject {
         let closed2 = await tcApi.closeBOMWindows(
             tcEndpointUrl: APIConfig.closeBOMWindows(tcUrl: baseUrl))
             
+            return results
+        }
+
+    
+    func createBOM() async -> [ItemCreationResult] {
+            var results: [ItemCreationResult] = []
+            let settings = SettingsManager.shared
+            let baseUrl = settings.tcURL
+            
+            print("👉 Starting BOM creation for domain:", domainName)
+            // 1) Login
+            print("🔑 Logging in to Teamcenter at", baseUrl)
+            guard let sessionId = await tcApi.tcLogin(
+                tcEndpointUrl: APIConfig.tcLoginUrl(tcUrl: baseUrl),
+                userName:      settings.tcUsername,
+                userPassword:  settings.tcPassword
+            ) else {
+                print("❌ Login failed. Aborting.")
+                return generatedBOM
+                    .filter { $0.isEnabled }
+                    .map { ItemCreationResult(itemName: $0.name, success: false) }
+            }
+            print("✅ Logged in, JSESSIONID =", sessionId)
+            
+            // 2) Create a new container folder for this BOM
+            print("📁 Creating container folder for BOM domain:", domainName)
+            let (folderUid, folderCls, folderType) = await tcApi.createFolder(
+                tcEndpointUrl: APIConfig.tcCreateFolder(tcUrl: baseUrl),
+                name:          domainName,
+                desc:          "Container for BOM of \(domainName)",
+                containerUid:  settings.bomFolderUid,
+                containerClassName: settings.bomFolderClassName,
+                containerType: settings.bomFolderType
+            )
+            guard
+                let containerUid = folderUid,
+                let containerCls = folderCls,
+                let containerTyp = folderType
+            else {
+                print("❌ Failed to create BOM container folder. Aborting.")
+                return generatedBOM
+                    .filter { $0.isEnabled }
+                    .map { ItemCreationResult(itemName: $0.name, success: false) }
+            }
+            print("✅ Created BOM container folder:", containerUid)
+            self.containerFolderUid = containerUid
+            // 3) Close any old BOM windows
+            print("🧹 Closing existing BOM windows")
+            let closed = await tcApi.closeBOMWindows(
+                tcEndpointUrl: APIConfig.closeBOMWindows(tcUrl: baseUrl)
+            )
+            print("🔒 Closed windows:", closed ?? [])
+            
+            var windowsToSave: [[String:Any]] = []
+            
+            // Recursive helper
+            func process(
+                _ node: BOMItem,
+                parentLineUid: String?
+            ) async {
+                guard node.isEnabled else {
+                    print("🚫 Skipping disabled item", node.name)
+                    return
+                }
+                print("🌱 Processing item", node.name, "level:", parentLineUid == nil ? "root" : "child")
+                
+                // 4) Create the Item
+                //    - root item goes into the new BOM container folder
+                //    - all others also into that same folder
+                let (itemUid, itemRevUid) = await tcApi.createItem(
+                    tcEndpointUrl: APIConfig.tcCreateItem(tcUrl: baseUrl),
+                    name: node.name,
+                    type: node.type,
+                    description: node.desc,
+                    containerUid: containerUid,
+                    containerClassName: containerCls,
+                    containerType: containerTyp
+                )
+                let okCreate = (itemUid != nil && itemRevUid != nil)
+                print(okCreate
+                      ? "✅ Created item '\(node.name)': uid=\(itemUid!), rev=\(itemRevUid!)"
+                      : "❌ Failed to create item '\(node.name)'")
+                results.append(.init(itemName: node.name, success: okCreate))
+                guard let uid = itemUid, let rev = itemRevUid else { return }
+                
+                var currentLineUid: String? = parentLineUid
+                
+                if parentLineUid == nil {
+                    // 5) Root level -> open BOM window on this new item
+                    print("📂 Creating BOM window for root item '\(node.name)'")
+                    let (winUid, lineUid) = await tcApi.createBOMWindows(
+                        tcEndpointUrl: APIConfig.createBOMWindows(tcUrl: baseUrl),
+                        itemUid: uid,
+                        revRule:    "A",
+                        unitNo:     1,
+                        date:       "0001-01-01T00:00:00",
+                        today:      true,
+                        endItem:    uid,
+                        endItemRevision: rev
+                    )
+                    if let w = winUid, let l = lineUid {
+                        print("✅ BOM window:", w, "rootLine:", l)
+                        windowsToSave.append([
+                            "uid": w,
+                            "className": "BOMWindow",
+                            "type": "BOMWindow"
+                        ])
+                        currentLineUid = l
+                    } else {
+                        print("❌ Failed to create BOM window for", node.name)
+                        return
+                    }
+                } else {
+                    // 6) Child level -> add under parentLineUid
+                    print("➕ Adding child '\(node.name)' under parent line \(parentLineUid!)")
+                    if let resp = await tcApi.addOrUpdateChildrenToParentLine(
+                        tcEndpointUrl: APIConfig.addOrUpdateBOMLine(tcUrl: baseUrl),
+                        parentLine: parentLineUid!,
+                        createdItemRevUid: rev
+                    ) {
+                        if let newLine = resp.itemLines?.first?.bomline.uid {
+                            print("✅ Added child line UID =", newLine)
+                            currentLineUid = newLine
+                        } else {
+                            print("⚠️ No new bomline returned for", node.name)
+                        }
+                    } else {
+                        print("❌ Failed to add child line for", node.name)
+                    }
+                }
+                
+                // 7) Recurse into children
+                for child in node.items {
+                    await process(child, parentLineUid: currentLineUid)
+                }
+            }
+            
+            // 8) Start processing
+            for root in generatedBOM {
+                await process(root, parentLineUid: nil)
+            }
+            
+            // 9) Save windows
+            print("💾 Saving all BOM windows:", windowsToSave)
+            let saved = await tcApi.saveBOMWindows(
+                tcEndpointUrl: APIConfig.saveBOMWindows(tcUrl: baseUrl),
+                bomWindows: windowsToSave
+            )
+            print("✅ saveBOMWindows updated:", saved?.updated ?? [])
+            
+            // 10) Close windows
+            print("🔒 Closing created BOM windows")
+            let closed2 = await tcApi.closeBOMWindows(
+                tcEndpointUrl: APIConfig.closeBOMWindows(tcUrl: baseUrl)
+            )
+            print("🔒 Closed windows:", closed2 ?? [])
+            
+            print("🏁 Finished BOM creation for", domainName)
             return results
         }
 
