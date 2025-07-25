@@ -105,7 +105,7 @@ struct BomGeneratorContent: View {
             }
             
             PushToTCView(
-                uid: vm.containerFolderUid,
+                uid: vm.rootBOMItemUid,
                 containerFolderName: vm.domainName,
                 pushToHistoryAction: {
                     await vm.saveGeneratedBOMToHistory()
