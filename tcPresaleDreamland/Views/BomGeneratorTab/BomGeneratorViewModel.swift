@@ -149,7 +149,7 @@ class BomGeneratorViewModel: ObservableObject {
         }
     }
     
-    func createBOM() async -> [ItemCreationResult] {
+    func createBOM1() async -> [ItemCreationResult] {
         var results: [ItemCreationResult] = []
         let settings = SettingsManager.shared
         let baseUrl = settings.tcURL
@@ -308,6 +308,141 @@ class BomGeneratorViewModel: ObservableObject {
         print("🏁 Finished BOM creation for", domainName)
         return results
     }
+    
+    func createBOM() async -> [ItemCreationResult] {
+        let settings = SettingsManager.shared
+        let baseUrl  = settings.tcURL
+        var results: [ItemCreationResult] = []
+
+        // ---------- 1) Log in first (same as createSelectedItems) ----------
+        guard (await tcApi.tcLogin(
+            tcEndpointUrl: APIConfig.tcLoginUrl(tcUrl: baseUrl),
+            userName:      settings.tcUsername,
+            userPassword:  settings.tcPassword
+        )) != nil else {
+            print("Login failed. Cannot create BOM.")
+            return generatedBOM
+                .filter { $0.isEnabled }
+                .map { ItemCreationResult(itemName: $0.name, success: false) }
+        }
+
+        // ---------- 2) Guard against concurrent runs ----------
+        guard !isLoading else { return [] }
+        isLoading = true
+        defer { isLoading = false }
+
+        // ---------- 3) Create a container folder ----------
+        let (folderUid, folderCls, folderType) = await tcApi.createFolder(
+            tcEndpointUrl: APIConfig.tcCreateFolder(tcUrl: baseUrl),
+            name:          domainName,
+            desc:          "Container for BOM of \(domainName)",
+            containerUid:  settings.bomFolderUid,
+            containerClassName: settings.bomFolderClassName,
+            containerType: settings.bomFolderType
+        )
+
+        guard
+            let containerUid = folderUid,
+            let containerCls = folderCls,
+            let containerTyp = folderType
+        else {
+            // Folder creation failed → mark every enabled node as failed.
+            return generatedBOM
+                .filter { $0.isEnabled }
+                .map { ItemCreationResult(itemName: $0.name, success: false) }
+        }
+
+        // ---------- 4) Close any old BOM windows ----------
+        _ = await tcApi.closeBOMWindows(
+            tcEndpointUrl: APIConfig.closeBOMWindows(tcUrl: baseUrl)
+        )
+
+        var windowsToSave: [[String:Any]] = []
+        var rootBOMRevUid: String? = nil
+
+        // ---------- 5) Recursive creator (same as your version) ----------
+        func process(_ node: BOMItem, parentLineUid: String?) async {
+            guard node.isEnabled else { return }
+
+            // 5.1) Create the Item
+            let (itemUid, itemRevUid) = await tcApi.createItem(
+                tcEndpointUrl: APIConfig.tcCreateItem(tcUrl: baseUrl),
+                name: node.name,
+                type: node.type,
+                description: node.desc,
+                containerUid: containerUid,
+                containerClassName: containerCls,
+                containerType: containerTyp
+            )
+            let okCreate = (itemUid != nil && itemRevUid != nil)
+            results.append(.init(itemName: node.name, success: okCreate))
+            guard let uid = itemUid, let rev = itemRevUid else { return }
+
+            var currentLineUid: String? = parentLineUid
+
+            if parentLineUid == nil {
+                // 5.2) Root → open BOM window
+                rootBOMRevUid = rev
+                let (winUid, lineUid) = await tcApi.createBOMWindows(
+                    tcEndpointUrl: APIConfig.createBOMWindows(tcUrl: baseUrl),
+                    itemUid: uid,
+                    revRule:    "A",
+                    unitNo:     1,
+                    date:       "0001-01-01T00:00:00",
+                    today:      true,
+                    endItem:    uid,
+                    endItemRevision: rev
+                )
+                if let w = winUid, let l = lineUid {
+                    windowsToSave.append([
+                        "uid": w,
+                        "className": "BOMWindow",
+                        "type": "BOMWindow"
+                    ])
+                    currentLineUid = l
+                } else {
+                    return
+                }
+            } else {
+                // 5.3) Child → add under parent
+                if let resp = await tcApi.addOrUpdateChildrenToParentLine(
+                    tcEndpointUrl: APIConfig.addOrUpdateBOMLine(tcUrl: baseUrl),
+                    parentLine: parentLineUid!,
+                    createdItemRevUid: rev
+                ) {
+                    if let newLine = resp.itemLines?.first?.bomline.uid {
+                        currentLineUid = newLine
+                    }
+                }
+            }
+
+            // 5.4) Recurse into children
+            for child in node.items {
+                await process(child, parentLineUid: currentLineUid)
+            }
+        }
+
+        // ---------- 6) Start processing roots ----------
+        for root in generatedBOM {
+            await process(root, parentLineUid: nil)
+        }
+
+        // ---------- 7) Save & close windows ----------
+        _ = await tcApi.saveBOMWindows(
+            tcEndpointUrl: APIConfig.saveBOMWindows(tcUrl: baseUrl),
+            bomWindows: windowsToSave
+        )
+        _ = await tcApi.closeBOMWindows(
+            tcEndpointUrl: APIConfig.closeBOMWindows(tcUrl: baseUrl)
+        )
+
+        // Update for UI buttons
+        self.containerFolderUid = containerUid
+        self.rootBOMItemUid     = rootBOMRevUid ?? ""
+
+        return results
+    }
+
     
     func setEnabled(id: UUID, to newValue: Bool) {
         // Disable entire subtree
