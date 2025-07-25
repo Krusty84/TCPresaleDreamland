@@ -9,8 +9,8 @@ import Foundation
 import SwiftUI
 import Combine
 
-/// Observable object that drives the *Generate Items* screen.
-/// It exposes published properties so SwiftUI will refresh
+/// Observable object that drives the *Generate BOM* screen.
+/// It exposes published properties so SwiftUI refreshes
 /// automatically when they change.
 class BomGeneratorViewModel: ObservableObject {
     // MARK: - Private helpers
@@ -22,18 +22,18 @@ class BomGeneratorViewModel: ObservableObject {
     private let llmHelpser  = LLMHelpers.shared
     
     // MARK: - Published state (drives the UI)
-    @Published var domainName: String = ""        // "Airplane", "Radio", "Nuclear", ...
-    @Published var containerFolderUid: String = "" // Teamcenter folder UID after creation
-    @Published var rootBOMItemUid: String = "" // Teamcenter folder UID after creation
-    @Published var count: String = ""             // How many items the user wants (String so it binds to TextField)
-    @Published var generatedBOM: [BOMItem] = []     // Result list that the table shows
-    @Published var isLoading: Bool = false         // Show progress spinner when true
-    @Published var errorMessage: String?           // Non‑nil means we show an alert
+    @Published var domainName: String = ""          // Product name: "Airplane", "Radio", ...
+    @Published var containerFolderUid: String = ""  // Teamcenter folder UID after we create it
+    @Published var rootBOMItemUid: String = ""      // Root BOM item revision UID (for *Open in TC*)
+    @Published var count: String = ""               // How many top‑level items user wants (String for TextField binding)
+    @Published var generatedBOM: [BOMItem] = []     // Root nodes of the generated BOM tree
+    @Published var isLoading: Bool = false          // Show progress spinner when true
+    @Published var errorMessage: String?            // Non‑nil means we show an alert
     
     // MARK: - Generation parameters (bind to Steppers)
-    @Published var bomTemperature: Double        // 0 → deterministic, 1 → very creative
-    @Published var bomMaxTokens: Int             // LLM token limit
-    @Published var itemTypes: [String] = []      // Allowed Teamcenter item types
+    @Published var bomTemperature: Double           // 0 → deterministic, 1 → very creative
+    @Published var bomMaxTokens: Int                // LLM token limit
+    @Published var itemTypes: [String] = []         // Allowed Teamcenter item types
     
     // MARK: - Core Data context
     private let dataStorageContext: NSManagedObjectContext
@@ -43,9 +43,9 @@ class BomGeneratorViewModel: ObservableObject {
         storageController: NSManagedObjectContext = StorageController.shared.container.viewContext
     ) {
         // Initialize from persistent SettingsManager so we keep user choices.
-        self.bomTemperature = SettingsManager.shared.bomTemperature
-        self.bomMaxTokens   = SettingsManager.shared.bomMaxTokens
-        self.itemTypes        = SettingsManager.shared.bomListOfTypes_storage
+        self.bomTemperature     = SettingsManager.shared.bomTemperature
+        self.bomMaxTokens       = SettingsManager.shared.bomMaxTokens
+        self.itemTypes          = SettingsManager.shared.bomListOfTypes_storage
         self.dataStorageContext = storageController
         
         // Keep `itemTypes` in sync with SettingsManager at runtime.
@@ -90,12 +90,12 @@ class BomGeneratorViewModel: ObservableObject {
                             .trimmingCharacters(in: .whitespacesAndNewlines)
                     }
                     
-                    // Try decoding the JSON into our `DeepSeekResponse` struct.
+                    // Try decoding the JSON into our `DeepSeekBOMResponse` struct.
                     if let data = cleanedContent.data(using: .utf8) {
                         do {
                             let decodedResponse = try JSONDecoder().decode(DeepSeekBOMResponse.self, from: data)
-                            //await MainActor.run { generatedBOM = [ decodedResponse.product ] + decodedResponse.product.items}
-                            await MainActor.run { generatedBOM =  [decodedResponse.product]}
+                            // Keep only the product root; its children live inside it.
+                            await MainActor.run { generatedBOM = [decodedResponse.product] }
                         } catch {
                             await MainActor.run {
                                 errorMessage = "Failed to decode response: \(error.localizedDescription)"
@@ -104,10 +104,12 @@ class BomGeneratorViewModel: ObservableObject {
                         }
                     }
                     
+                    // Debug helper (not used by the UI).
                     func printJSON() {
                         do {
                             let jsonData = try JSONSerialization.data(withJSONObject: self.generatedBOM, options: .prettyPrinted)
                             if let jsonString = String(data: jsonData, encoding: .utf8) {
+                                print(jsonString)
                             }
                         } catch {
                             print("Error converting JSON: \(error.localizedDescription)")
@@ -126,7 +128,7 @@ class BomGeneratorViewModel: ObservableObject {
         }
     }
     
-    /// Save the *current* generated items batch into Core Data history.
+    /// Save the *current* generated BOM batch into Core Data history.
     /// We call this after the user presses *Save to History*.
     func saveGeneratedBOMToHistory() async  {
         await dataStorageContext.perform {
@@ -149,6 +151,15 @@ class BomGeneratorViewModel: ObservableObject {
         }
     }
     
+    /// Create the whole BOM inside Teamcenter and return a per‑item report.
+    /// The call:
+    /// 1. Logs in.
+    /// 2. Guards against concurrent runs.
+    /// 3. Creates a folder to hold the new items.
+    /// 4. Closes any old BOM windows.
+    /// 5. Recursively creates items and BOM lines.
+    /// 6. Saves & closes the windows.
+    /// 7. Returns `[ItemCreationResult]` for the UI.
     func createBOM() async -> [ItemCreationResult] {
         let settings = SettingsManager.shared
         let baseUrl  = settings.tcURL
@@ -200,7 +211,9 @@ class BomGeneratorViewModel: ObservableObject {
         var windowsToSave: [[String:Any]] = []
         var rootBOMRevUid: String? = nil
 
-        // ---------- 5) Recursive creator (same as your version) ----------
+        // ---------- 5) Recursive creator ----------
+        /// Create this node (and its children) inside TC.
+        /// - `parentLineUid == nil` → this is the root node and we open a BOM window.
         func process(_ node: BOMItem, parentLineUid: String?) async {
             guard node.isEnabled else { return }
 
@@ -214,8 +227,8 @@ class BomGeneratorViewModel: ObservableObject {
                 containerClassName: containerCls,
                 containerType: containerTyp
             )
-            let okCreate = (itemUid != nil && itemRevUid != nil)
-            results.append(.init(itemName: node.name, success: okCreate))
+            let didSucceed = (itemUid != nil && itemRevUid != nil)
+            results.append(.init(itemName: node.name, success: didSucceed))
             guard let uid = itemUid, let rev = itemRevUid else { return }
 
             var currentLineUid: String? = parentLineUid
@@ -283,7 +296,9 @@ class BomGeneratorViewModel: ObservableObject {
         return results
     }
 
-    
+    /// Toggle `isEnabled` for the node with `id`.
+    /// - If you disable a node → all its children are disabled too.
+    /// - If you enable a node   → all its parents become enabled (so the path is visible).
     func setEnabled(id: UUID, to newValue: Bool) {
         // Disable entire subtree
         func disableAll(_ items: inout [BOMItem]) {
@@ -321,6 +336,7 @@ class BomGeneratorViewModel: ObservableObject {
         _ = recurse(&generatedBOM)
     }
     
+    /// Change the Teamcenter item `type` on every node in the BOM tree.
     func updateAllItemTypes(to newType: String) {
         func recursivelyUpdateTypes(items: inout [BOMItem]) {
             for index in items.indices {
