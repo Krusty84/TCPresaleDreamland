@@ -12,6 +12,7 @@ import Combine
 /// Observable object that drives the *Generate BOM* screen.
 /// It exposes published properties so SwiftUI refreshes
 /// automatically when they change.
+@MainActor
 class BomGeneratorViewModel: ObservableObject {
     // MARK: - Private helpers
     /// Store Combine cancellables so the `sink` lives as long as the view‑model.
@@ -106,15 +107,20 @@ class BomGeneratorViewModel: ObservableObject {
                     
                     // Debug helper (not used by the UI).
                     func printJSON() {
-                        do {
-                            let jsonData = try JSONSerialization.data(withJSONObject: self.generatedBOM, options: .prettyPrinted)
-                            if let jsonString = String(data: jsonData, encoding: .utf8) {
-                                print(jsonString)
+                        Task {
+                            // 1) Read the @Published value on the main actor
+                            let snapshot = await MainActor.run { self.generatedBOM }
+
+                            // 2) Encode snapshot off the main actor
+                            do {
+                                let data = try JSONEncoder().encode(snapshot)   // BOMItem must be Encodable/Codable
+                                if let s = String(data: data, encoding: .utf8) { print(s) }
+                            } catch {
+                                print("Encode error: \(error)")
                             }
-                        } catch {
-                            print("Error converting JSON: \(error.localizedDescription)")
                         }
                     }
+
                     
                 }
             } catch {

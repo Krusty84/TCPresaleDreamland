@@ -62,6 +62,7 @@ class HistoryViewModel: ObservableObject {
     
     // MARK: - Restore
     // Restore the selected histoy item to Items Generator View
+    @MainActor
     func restoreItemHistory(
         selectedRowId: Set<GeneratedItemsDataByLLM.ID>,
         itemsGeneratorViewModel itemVM: ItemsGeneratorViewModel
@@ -84,6 +85,7 @@ class HistoryViewModel: ObservableObject {
         itemVM.generatedItems = allItems
     }
     
+    @MainActor
     func restoreBOMHistory(
         selectedRowIds: Set<GeneratedBOMDataByLLM.ID>,
         bomGeneratorViewModel bomVM: BomGeneratorViewModel

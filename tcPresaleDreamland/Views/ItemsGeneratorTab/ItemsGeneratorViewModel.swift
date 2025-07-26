@@ -12,6 +12,7 @@ import Combine
 /// Observable object that drives the *Generate Items* screen.
 /// It exposes published properties so SwiftUI will refresh
 /// automatically when they change.
+@MainActor
 class ItemsGeneratorViewModel: ObservableObject {
     // MARK: - Private helpers
     /// Store Combine cancellables so the `sink` lives as long as the view‑model.
@@ -184,8 +185,7 @@ class ItemsGeneratorViewModel: ObservableObject {
 
         // ---------- 4) Create items one by one ----------
         var results: [ItemCreationResult] = []
-        self.containerFolderUid = containerUid  // So the UI can show *Open in TC* button.
-
+       
         for item in generatedItems where item.isEnabled {
             let (newUid, newRev) = await tcApi.createItem(
                 tcEndpointUrl: APIConfig.tcCreateItem(tcUrl: SettingsManager.shared.tcURL),
@@ -199,7 +199,10 @@ class ItemsGeneratorViewModel: ObservableObject {
             let didSucceed = (newUid != nil && newRev != nil)
             results.append(.init(itemName: item.name, success: didSucceed))
         }
-
+        
+        // Update for UI buttons
+        self.containerFolderUid = containerUid
+        
         return results
     }
 }
