@@ -107,6 +107,8 @@ struct BomGeneratorContent: View {
             PushToTCView(
                 uid: vm.rootBOMItemUid,
                 containerFolderName: vm.domainName,
+                isLoading: vm.isLoading,
+                statusMessage: vm.statusMessage,
                 pushToHistoryAction: {
                     await vm.saveGeneratedBOMToHistory()
                 },
@@ -119,6 +121,7 @@ struct BomGeneratorContent: View {
                 }
             )
             .disabled(vm.generatedBOM.allSatisfy { !$0.isEnabled })
+
             
         }
         .frame(minWidth: 600, minHeight: 500)

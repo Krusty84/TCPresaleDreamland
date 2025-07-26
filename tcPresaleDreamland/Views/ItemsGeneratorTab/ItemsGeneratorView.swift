@@ -108,6 +108,8 @@ struct ItemsGeneratorContent: View {
             PushToTCView(
                 uid: vm.containerFolderUid,
                 containerFolderName: vm.domainName,
+                isLoading: vm.isLoading,
+                statusMessage: vm.statusMessage,
                 pushToHistoryAction: {
                     await vm.saveGeneratedItemsToHistory()
                 },
@@ -120,6 +122,9 @@ struct ItemsGeneratorContent: View {
                 }
             )
             .disabled(vm.generatedItems.allSatisfy { !$0.isEnabled })
+
+            
+            
         }
         .frame(minWidth: 600, minHeight: 500)
     }

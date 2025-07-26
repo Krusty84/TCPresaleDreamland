@@ -8,60 +8,76 @@
 import SwiftUI
 
 struct PushToTCView: View {
-    // UID of the newly created Teamcenter folder (empty until creation).
+    // UID of the created Teamcenter object (folder or item rev).
     let uid: String
-    // Human‑readable folder name, used in the fallback text.
     let containerFolderName: String
-    // Async callback that stores the batch to Core Data history.
+
+    // Inputs for status during work
+    let isLoading: Bool
+    let statusMessage: String
+
+    // Actions
     let pushToHistoryAction: @Sendable () async -> Void
-    // Async callback that sends the items to Teamcenter.
-    let pushToTCVoidAction: @Sendable () async -> Void
-    
-    // Build an Active Workspace deep‑link *only* when the user configured
-    // an AWC base URL. Otherwise, `awcURL` is nil and we fall back to plain
-    // text that tells the user where to find the folder.
+    let pushToTCVoidAction:   @Sendable () async -> Void
+
+    // Build AWC deep‑link if base URL is configured
     private var awcURL: URL? {
         guard !SettingsManager.shared.awcURL.isEmpty else { return nil }
         return URL(string: APIConfig.awcOpenDataPath(awcUrl: SettingsManager.shared.awcURL) + uid)
     }
-    
-    // Used to change the cursor to a pointing hand when the user hovers over
-    // the "Open in AWC" link.  macOS‑only, no effect on iOS.
+
     @State private var isHovering = false
 
     var body: some View {
-        HStack {
-            // --------------------------- Status area ----------------------
+        HStack(spacing: 12) {
             Text("Status:")
-            // Show status only when a UID exists
-            if !uid.isEmpty {
+
+            // ---------- SUCCESS ----------
+            // If transfer is done and we have a UID, show ONLY the link/fallback.
+            if !isLoading, !uid.isEmpty {
                 if let url = awcURL {
-                    // Deep‑link available → present as clickable link
                     Link("Open in AWC", destination: url)
                         .onHover { hovering in
                             isHovering = hovering
+                            #if os(macOS)
                             hovering ? NSCursor.pointingHand.push() : NSCursor.pop()
+                            #endif
                         }
                 } else {
-                    // No AWC base URL set → instruct user to search in TC
                     Text("Find \"\(containerFolderName)\" folder in TC")
                 }
+
+            // ---------- IN PROGRESS ----------
+            } else if isLoading {
+                ProgressView().scaleEffect(0.9)
+                Text(statusMessage.isEmpty ? "Working…" : statusMessage)
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+
+            // ---------- IDLE / ERROR / INFO ----------
+            } else if !statusMessage.isEmpty {
+                // Show whatever message you set in the view‑model
+                Text(statusMessage)
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+            } else {
+                Text("Idle")
             }
+
             Spacer()
-            
-            // --------------------------- Action buttons -------------------
+
             Button("Save to History") {
-                // Run callback on background Task so UI stays responsive.
                 Task { await pushToHistoryAction() }
             }
             Button("Push to TC") {
-                // Creates the selected items inside Teamcenter.
                 Task { await pushToTCVoidAction() }
             }
         }
-        .padding() // Equal padding on all sides so buttons are not cramped.
+        .padding()
     }
 }
+
+
 
 
 

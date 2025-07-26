@@ -5,13 +5,10 @@
 //  Created by Sedoykin Alexey on 21/05/2025.
 //
 
-import Foundation
-import SwiftUI
 import Combine
+import CoreData
+import Foundation
 
-/// Observable object that drives the *Generate BOM* screen.
-/// It exposes published properties so SwiftUI refreshes
-/// automatically when they change.
 @MainActor
 class BomGeneratorViewModel: ObservableObject {
     // MARK: - Private helpers
@@ -21,24 +18,25 @@ class BomGeneratorViewModel: ObservableObject {
     private let tcApi       = TeamcenterAPIService.shared
     private let deepSeekApi = DeepSeekAPIService.shared
     private let llmHelpser  = LLMHelpers.shared
-    
+
     // MARK: - Published state (drives the UI)
     @Published var domainName: String = ""          // Product name: "Airplane", "Radio", ...
     @Published var containerFolderUid: String = ""  // Teamcenter folder UID after we create it
-    @Published var rootBOMItemUid: String = ""      // Root BOM item revision UID (for *Open in TC*)
+    @Published var rootBOMItemUid: String = ""      // Root BOM item revision UID (for *Open in AWC*)
     @Published var count: String = ""               // How many top‑level items user wants (String for TextField binding)
     @Published var generatedBOM: [BOMItem] = []     // Root nodes of the generated BOM tree
     @Published var isLoading: Bool = false          // Show progress spinner when true
     @Published var errorMessage: String?            // Non‑nil means we show an alert
-    
+    @Published var statusMessage: String = ""       // Human‑friendly status line for the footer
+
     // MARK: - Generation parameters (bind to Steppers)
     @Published var bomTemperature: Double           // 0 → deterministic, 1 → very creative
     @Published var bomMaxTokens: Int                // LLM token limit
     @Published var itemTypes: [String] = []         // Allowed Teamcenter item types
-    
+
     // MARK: - Core Data context
     private let dataStorageContext: NSManagedObjectContext
-    
+
     // MARK: - Init
     init(
         storageController: NSManagedObjectContext = StorageController.shared.container.viewContext
@@ -48,7 +46,7 @@ class BomGeneratorViewModel: ObservableObject {
         self.bomMaxTokens       = SettingsManager.shared.bomMaxTokens
         self.itemTypes          = SettingsManager.shared.bomListOfTypes_storage
         self.dataStorageContext = storageController
-        
+
         // Keep `itemTypes` in sync with SettingsManager at runtime.
         SettingsManager.shared.$bomListOfTypes_storage
             .sink { [weak self] newTypes in
@@ -56,7 +54,13 @@ class BomGeneratorViewModel: ObservableObject {
             }
             .store(in: &cancellables)
     }
-    
+
+    // MARK: - Status
+    /// Set a short status message on the main actor.
+    private func setStatus(_ text: String) {
+        Task { await MainActor.run { self.statusMessage = text } }
+    }
+
     // MARK: - Public API ----------------------------------------------------
     /// Ask the DeepSeek LLM to generate the BOM.
     func generateBOM() {
@@ -66,97 +70,88 @@ class BomGeneratorViewModel: ObservableObject {
                 isLoading = true
                 errorMessage = nil
             }
-            
+            setStatus("Generating BOM…")
+
             do {
                 // Build the prompt and call DeepSeek.
                 let response = try await deepSeekApi.chatLLM(
-                    apiKey:     SettingsManager.shared.apiKey,
+                    apiKey:      SettingsManager.shared.apiKey,
                     prompt:      llmHelpser.generateBOMPrompt(productName: domainName, count: count),
                     temperature: bomTemperature,
                     max_tokens:  bomMaxTokens
                 )
-                
+
                 // Parse the standard OpenAI‑style JSON response.
                 if let choices = response["choices"] as? [[String: Any]],
                    let firstChoice = choices.first,
                    let message = firstChoice["message"] as? [String: Any],
                    let content = message["content"] as? String {
-                    
+
                     var cleanedContent = content
-                    // If the model wrapped JSON in ```json ... ``` we strip it off.
+                    // If the model wrapped JSON in ```json … ``` strip it off.
                     if content.contains("```json") {
                         cleanedContent = content
                             .replacingOccurrences(of: "```json", with: "")
                             .replacingOccurrences(of: "```",    with: "")
                             .trimmingCharacters(in: .whitespacesAndNewlines)
                     }
-                    
+
                     // Try decoding the JSON into our `DeepSeekBOMResponse` struct.
                     if let data = cleanedContent.data(using: .utf8) {
                         do {
                             let decodedResponse = try JSONDecoder().decode(DeepSeekBOMResponse.self, from: data)
                             // Keep only the product root; its children live inside it.
-                            await MainActor.run { generatedBOM = [decodedResponse.product] }
+                            await MainActor.run {
+                                generatedBOM = [decodedResponse.product]
+                                statusMessage = "BOM ready. Review items, then press “Push to TC”."
+                            }
                         } catch {
                             await MainActor.run {
                                 errorMessage = "Failed to decode response: \(error.localizedDescription)"
-                                print("DEBUG - Decoding error:", error)
+                                statusMessage = "Failed to decode LLM response. Check your system prompt."
                             }
+                            print("DEBUG - Decoding error:", error)
                         }
                     }
-                    
-                    // Debug helper (not used by the UI).
-                    func printJSON() {
-                        Task {
-                            // 1) Read the @Published value on the main actor
-                            let snapshot = await MainActor.run { self.generatedBOM }
-
-                            // 2) Encode snapshot off the main actor
-                            do {
-                                let data = try JSONEncoder().encode(snapshot)   // BOMItem must be Encodable/Codable
-                                if let s = String(data: data, encoding: .utf8) { print(s) }
-                            } catch {
-                                print("Encode error: \(error)")
-                            }
-                        }
-                    }
-
-                    
                 }
             } catch {
                 await MainActor.run {
-                    errorMessage = "Failed to generate items: \(error.localizedDescription)"
+                    errorMessage = "Failed to generate BOM: \(error.localizedDescription)"
+                    statusMessage = "Failed to generate BOM."
                 }
+                print("Failed to generate BOM.", error.localizedDescription)
             }
-            
+
             // Hide spinner.
             await MainActor.run { isLoading = false }
         }
     }
-    
+
     /// Save the *current* generated BOM batch into Core Data history.
     /// We call this after the user presses *Save to History*.
-    func saveGeneratedBOMToHistory() async  {
+    func saveGeneratedBOMToHistory() async {
+        setStatus("Saving to history…")
         await dataStorageContext.perform {
             let record = GeneratedBOMDataByLLM(context: self.dataStorageContext)
             record.id        = UUID()       // Unique ID for this batch
             record.name      = self.domainName
             record.timestamp = Date()
-            
+
             if let data = try? JSONEncoder().encode(self.generatedBOM) {
                 record.rawResponse = data
             } else {
-                print("❌ Failed to JSON‑encode generatedItems")
+                print("❌ Failed to JSON‑encode generatedBOM")
             }
-            
+
             do {
                 try self.dataStorageContext.save()
             } catch {
                 print("❌ Core Data save error:", error)
             }
         }
+        setStatus("Saved to history.")
     }
-    
+
     /// Create the whole BOM inside Teamcenter and return a per‑item report.
     /// The call:
     /// 1. Logs in.
@@ -171,12 +166,15 @@ class BomGeneratorViewModel: ObservableObject {
         let baseUrl  = settings.tcURL
         var results: [ItemCreationResult] = []
 
+        setStatus("Connecting to Teamcenter…")
+
         // ---------- 1) Log in first (same as createSelectedItems) ----------
         guard (await tcApi.tcLogin(
             tcEndpointUrl: APIConfig.tcLoginUrl(tcUrl: baseUrl),
             userName:      settings.tcUsername,
             userPassword:  settings.tcPassword
         )) != nil else {
+            setStatus("Login failed. Check Teamcenter credentials.")
             print("Login failed. Cannot create BOM.")
             return generatedBOM
                 .filter { $0.isEnabled }
@@ -189,6 +187,7 @@ class BomGeneratorViewModel: ObservableObject {
         defer { isLoading = false }
 
         // ---------- 3) Create a container folder ----------
+        setStatus("Creating container folder…")
         let (folderUid, folderCls, folderType) = await tcApi.createFolder(
             tcEndpointUrl: APIConfig.tcCreateFolder(tcUrl: baseUrl),
             name:          domainName,
@@ -203,6 +202,7 @@ class BomGeneratorViewModel: ObservableObject {
             let containerCls = folderCls,
             let containerTyp = folderType
         else {
+            setStatus("Folder creation failed.")
             // Folder creation failed → mark every enabled node as failed.
             return generatedBOM
                 .filter { $0.isEnabled }
@@ -217,6 +217,11 @@ class BomGeneratorViewModel: ObservableObject {
         var windowsToSave: [[String:Any]] = []
         var rootBOMRevUid: String? = nil
 
+        // Progress helper (keeps text fresh without being noisy)
+        func setProgress(_ text: String) {
+            Task { await MainActor.run { self.statusMessage = text } }
+        }
+
         // ---------- 5) Recursive creator ----------
         /// Create this node (and its children) inside TC.
         /// - `parentLineUid == nil` → this is the root node and we open a BOM window.
@@ -224,6 +229,7 @@ class BomGeneratorViewModel: ObservableObject {
             guard node.isEnabled else { return }
 
             // 5.1) Create the Item
+            setProgress("Creating “\(node.name)”…")
             let (itemUid, itemRevUid) = await tcApi.createItem(
                 tcEndpointUrl: APIConfig.tcCreateItem(tcUrl: baseUrl),
                 name: node.name,
@@ -241,6 +247,7 @@ class BomGeneratorViewModel: ObservableObject {
 
             if parentLineUid == nil {
                 // 5.2) Root → open BOM window
+                setProgress("Create BOM…")
                 rootBOMRevUid = rev
                 let (winUid, lineUid) = await tcApi.createBOMWindows(
                     tcEndpointUrl: APIConfig.createBOMWindows(tcUrl: baseUrl),
@@ -264,6 +271,7 @@ class BomGeneratorViewModel: ObservableObject {
                 }
             } else {
                 // 5.3) Child → add under parent
+                setProgress("Adding “\(node.name)” to parent…")
                 if let resp = await tcApi.addOrUpdateChildrenToParentLine(
                     tcEndpointUrl: APIConfig.addOrUpdateBOMLine(tcUrl: baseUrl),
                     parentLine: parentLineUid!,
@@ -287,6 +295,7 @@ class BomGeneratorViewModel: ObservableObject {
         }
 
         // ---------- 7) Save & close windows ----------
+        setProgress("Saving and closing BOM…")
         _ = await tcApi.saveBOMWindows(
             tcEndpointUrl: APIConfig.saveBOMWindows(tcUrl: baseUrl),
             bomWindows: windowsToSave
@@ -295,7 +304,7 @@ class BomGeneratorViewModel: ObservableObject {
             tcEndpointUrl: APIConfig.closeBOMWindows(tcUrl: baseUrl)
         )
 
-        // Update for UI buttons
+        // Update for UI buttons (the footer view will show only the AWC link on success)
         self.containerFolderUid = containerUid
         self.rootBOMItemUid     = rootBOMRevUid ?? ""
 
@@ -313,22 +322,22 @@ class BomGeneratorViewModel: ObservableObject {
                 disableAll(&items[idx].items)
             }
         }
-        
+
         @discardableResult
         func recurse(_ items: inout [BOMItem]) -> Bool {
             for idx in items.indices {
                 if items[idx].id == id {
-                    // toggle this item
+                    // Toggle this node
                     items[idx].isEnabled = newValue
-                    // if unchecking, disable all descendants
+                    // If unchecking, disable all descendants
                     if !newValue {
                         disableAll(&items[idx].items)
                     }
                     return true
                 }
-                // descend into children
+                // Descend into children
                 if recurse(&items[idx].items) {
-                    // if any child was toggled on, propagate enable upward
+                    // If any child was toggled on, enable parents so the path stays visible
                     if newValue {
                         items[idx].isEnabled = true
                     }
@@ -337,11 +346,11 @@ class BomGeneratorViewModel: ObservableObject {
             }
             return false
         }
-        
-        // start recursion from the root list
+
+        // Start recursion from the root list
         _ = recurse(&generatedBOM)
     }
-    
+
     /// Change the Teamcenter item `type` on every node in the BOM tree.
     func updateAllItemTypes(to newType: String) {
         func recursivelyUpdateTypes(items: inout [BOMItem]) {
@@ -350,7 +359,7 @@ class BomGeneratorViewModel: ObservableObject {
                 recursivelyUpdateTypes(items: &items[index].items)
             }
         }
-        
         recursivelyUpdateTypes(items: &generatedBOM)
     }
 }
+
