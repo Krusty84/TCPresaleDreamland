@@ -91,7 +91,7 @@ class SettingsTabViewModel: ObservableObject {
     }
 
     @Published var homeFolderContent: [[String: Any]] = []
-
+    
     init() {
         let mgr = SettingsManager.shared
         self.appLoggingEnabled = mgr.appLoggingEnabled

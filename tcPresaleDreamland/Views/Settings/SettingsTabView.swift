@@ -98,8 +98,21 @@ struct SettingsTabContent: View {
                 // Items Generation Section
                 DisclosureGroup(isExpanded: $vm.isItemsSectionExpanded) {
                     VStack(alignment: .leading, spacing: 8) {
-                        TextEditor(text: $vm.itemsPrompt)
-                            .font(.body)
+                        //                        TextEditor(text: $vm.itemsPrompt)
+                        //                            .font(.body)
+                        //                            .frame(minHeight: 80)
+                        //                            .padding(4)
+                        //                            .background(Color(.textBackgroundColor))
+                        //                            .cornerRadius(6)
+                        //                            .overlay(
+                        //                                RoundedRectangle(cornerRadius: 6)
+                        //                                    .stroke(Color(.separatorColor), lineWidth: 1)
+                        //                            )
+                        //                            .help("The prompt being used")
+                        
+                        KeywordHighlightingTextView(text: $vm.itemsPrompt,
+                                                    keywords: vm.promptItemsKeywords,
+                                                    fontSize: NSFont.systemFontSize)
                             .frame(minHeight: 80)
                             .padding(4)
                             .background(Color(.textBackgroundColor))
@@ -108,7 +121,22 @@ struct SettingsTabContent: View {
                                 RoundedRectangle(cornerRadius: 6)
                                     .stroke(Color(.separatorColor), lineWidth: 1)
                             )
-                            .help("The prompt being used")
+                        .help("The prompt being used")
+                        
+                        // Quick check (under the editor)
+                        let missing = vm.missingKeywords(in: vm.itemsPrompt)
+                        if !missing.isEmpty {
+                            Text("Missing: " + missing.joined(separator: ", "))
+                                .font(.caption)
+                                .foregroundColor(.red)
+                        } else {
+                            HStack(spacing: 6) {
+                                Image(systemName: "checkmark.circle.fill").foregroundColor(.green)
+                                Text("All keywords present")
+                                    .font(.caption)
+                                    .foregroundColor(.green)
+                            }
+                        }
                         
                         HStack(spacing: 20) {
                             HStack {
@@ -154,8 +182,20 @@ struct SettingsTabContent: View {
                 // BOM Generation Section
                 DisclosureGroup(isExpanded: $vm.isBOMSectionExpanded) {
                     VStack(alignment: .leading, spacing: 8) {
-                        TextEditor(text: $vm.bomPrompt)
-                            .font(.body)
+//                        TextEditor(text: $vm.bomPrompt)
+//                            .font(.body)
+//                            .frame(minHeight: 80)
+//                            .padding(4)
+//                            .background(Color(.textBackgroundColor))
+//                            .cornerRadius(6)
+//                            .overlay(
+//                                RoundedRectangle(cornerRadius: 6)
+//                                    .stroke(Color(.separatorColor), lineWidth: 1)
+//                            )
+                        
+                        KeywordHighlightingTextView(text: $vm.bomPrompt,
+                                                    keywords: vm.promptKeywords,
+                                                    fontSize: NSFont.systemFontSize)
                             .frame(minHeight: 80)
                             .padding(4)
                             .background(Color(.textBackgroundColor))
@@ -207,7 +247,7 @@ struct SettingsTabContent: View {
                                   isExpanded: vm.isBOMSectionExpanded)
                 }
                 
-    
+                
                 // Req Spec Generation Section
                 DisclosureGroup(isExpanded: $vm.isReqSpecSectionExpanded) {
                     VStack(alignment: .leading, spacing: 8) {
@@ -293,20 +333,20 @@ struct SettingsTabContent: View {
                         }
                         
                         TextField("http(s)://ip-or-name-awc:port",text: $vm.awcURL)
-                           .textFieldStyle(RoundedBorderTextFieldStyle())
-                           .onReceive(Just(vm.awcURL)) { newValue in
-                               let filtered = newValue.unicodeScalars
-                                   .filter { vm.allowedUrlCharacters.contains($0) }
-                               let clean = String(String.UnicodeScalarView(filtered))
-                               if clean != newValue {
-                                   vm.awcURL = clean
-                               }
-                           }
+                            .textFieldStyle(RoundedBorderTextFieldStyle())
+                            .onReceive(Just(vm.awcURL)) { newValue in
+                                let filtered = newValue.unicodeScalars
+                                    .filter { vm.allowedUrlCharacters.contains($0) }
+                                let clean = String(String.UnicodeScalarView(filtered))
+                                if clean != newValue {
+                                    vm.awcURL = clean
+                                }
+                            }
                         if !vm.awcURL.isEmpty && !vm.isValidAWCURL {
                             Text("⚠️ Must be http://…:port or https://…:port")
-                                   .font(.footnote)
-                                   .foregroundColor(.red)
-                           }
+                                .font(.footnote)
+                                .foregroundColor(.red)
+                        }
                         
                         // All in one line: Username, Password, Status, Verify Button
                         HStack(spacing: 10) {
@@ -357,14 +397,14 @@ struct SettingsTabContent: View {
                         VStack(spacing: 4) {
                             Text("Items").font(.headline)
                             // .foregroundColor(.secondary)
-                           ListEditorView(items: SettingsManager.shared.itemsListOfTypes).frame(maxWidth: .infinity)
+                            ListEditorView(items: SettingsManager.shared.itemsListOfTypes).frame(maxWidth: .infinity)
                         }
                         
                         // Column B
                         VStack(spacing: 4) {
                             Text("BOM's").font(.headline)
                             // .foregroundColor(.secondary)
-                           ListEditorView(items: SettingsManager.shared.bomListOfTypes).frame(maxWidth: .infinity)
+                            ListEditorView(items: SettingsManager.shared.bomListOfTypes).frame(maxWidth: .infinity)
                         }
                         
                         // Column C
