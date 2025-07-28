@@ -104,7 +104,7 @@ class SettingsManager {
     You are an engineering-domain expert who writes Engineering Bills of Material (eBOM) into perfect JSON format.
     EXAMPLE INPUT:
     Product: Turbocharger
-    Depth: 3
+    Number of components: 3
     EXAMPLE JSON OUTPUT:
     {
         "product": {
@@ -152,9 +152,9 @@ class SettingsManager {
     3. Keep nesting until Depth is reached
     4. Return exactly one JSON object—no extra text, no comments
     ACTUAL TASK:
-    Build the eBOM now for:
+    Create the Engineering BOM now for:
     Product: {productName}
-    Depth: {depth}
+    Number of components: {depth}
     """
     let defaultBomTemperature = 0.5
     let defaultBomMaxTokens = 1000
