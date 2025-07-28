@@ -124,7 +124,7 @@ struct SettingsTabContent: View {
                         .help("The prompt being used")
                         
                         // Quick check (under the editor)
-                        let missing = vm.missingKeywords(in: vm.itemsPrompt)
+                        let missing = vm.missingItemsKeywords(in: vm.itemsPrompt)
                         if !missing.isEmpty {
                             Text("Missing: " + missing.joined(separator: ", "))
                                 .font(.caption)
@@ -192,9 +192,9 @@ struct SettingsTabContent: View {
 //                                RoundedRectangle(cornerRadius: 6)
 //                                    .stroke(Color(.separatorColor), lineWidth: 1)
 //                            )
-                        
+                       
                         KeywordHighlightingTextView(text: $vm.bomPrompt,
-                                                    keywords: vm.promptKeywords,
+                                                    keywords: vm.promptBOMKeywords,
                                                     fontSize: NSFont.systemFontSize)
                             .frame(minHeight: 80)
                             .padding(4)
@@ -204,8 +204,24 @@ struct SettingsTabContent: View {
                                 RoundedRectangle(cornerRadius: 6)
                                     .stroke(Color(.separatorColor), lineWidth: 1)
                             )
-                            .help("The prompt being used")
+                        .help("The prompt being used")
                         
+                        // Quick check (under the editor)
+                        let missing = vm.missingBOMKeywords(in: vm.bomPrompt)
+                        if !missing.isEmpty {
+                            Text("Missing: " + missing.joined(separator: ", "))
+                                .font(.caption)
+                                .foregroundColor(.red)
+                        } else {
+                            HStack(spacing: 6) {
+                                Image(systemName: "checkmark.circle.fill").foregroundColor(.green)
+                                Text("All keywords present")
+                                    .font(.caption)
+                                    .foregroundColor(.green)
+                            }
+                        }
+                        
+
                         HStack(spacing: 20) {
                             HStack {
                                 Slider(value: $vm.bomTemperature, in: 0...1, step: 0.1)

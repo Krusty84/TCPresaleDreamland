@@ -1,5 +1,5 @@
 //
-//  ExampleViewModel.swift
+//  ItemsGeneratorViewModel.swift
 //  tcPresaleDreamland
 //
 //  Created by Sedoykin Alexey on 21/05/2025.
@@ -18,7 +18,7 @@ class ItemsGeneratorViewModel: ObservableObject {
     private let tcApi       = TeamcenterAPIService.shared
     private let deepSeekApi = DeepSeekAPIService.shared
     private let llmHelpser  = LLMHelpers.shared
-
+    let thisIsAVeryLongVariableNameThatExceedsTheLineLengthLimitAndShouldTriggerALintWarning = 42
     // MARK: - Published state (drives the UI)
     @Published var domainName: String = ""          // "Airplane", "Radio", "Nuclear", ...
     @Published var containerFolderUid: String = ""  // Teamcenter folder UID after creation

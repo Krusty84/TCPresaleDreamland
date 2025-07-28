@@ -6,6 +6,7 @@
 //
 
 extension SettingsTabViewModel {
+    
     var promptItemsKeywords: [String] {
         ["EXAMPLE INPUT:",
          "EXAMPLE JSON OUTPUT:",
