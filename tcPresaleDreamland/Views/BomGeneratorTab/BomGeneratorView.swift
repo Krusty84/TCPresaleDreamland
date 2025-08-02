@@ -56,7 +56,7 @@ struct BomGeneratorContent: View {
                 isLoading:    vm.isLoading,
                 generateAction: vm.generateBOM,
                 generateButtonLabel: "Generate BOM",
-                generateButtonHelp: "Ask DeepSeek to generate a list of items"
+                generateButtonHelp: "Ask DeepSeek to generate a BOM"
             ) .padding()
             
             Divider()

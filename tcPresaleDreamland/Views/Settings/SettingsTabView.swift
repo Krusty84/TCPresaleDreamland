@@ -182,17 +182,6 @@ struct SettingsTabContent: View {
                 // BOM Generation Section
                 DisclosureGroup(isExpanded: $vm.isBOMSectionExpanded) {
                     VStack(alignment: .leading, spacing: 8) {
-//                        TextEditor(text: $vm.bomPrompt)
-//                            .font(.body)
-//                            .frame(minHeight: 80)
-//                            .padding(4)
-//                            .background(Color(.textBackgroundColor))
-//                            .cornerRadius(6)
-//                            .overlay(
-//                                RoundedRectangle(cornerRadius: 6)
-//                                    .stroke(Color(.separatorColor), lineWidth: 1)
-//                            )
-                       
                         KeywordHighlightingTextView(text: $vm.bomPrompt,
                                                     keywords: vm.promptBOMKeywords,
                                                     fontSize: NSFont.systemFontSize)
@@ -267,8 +256,9 @@ struct SettingsTabContent: View {
                 // Req Spec Generation Section
                 DisclosureGroup(isExpanded: $vm.isReqSpecSectionExpanded) {
                     VStack(alignment: .leading, spacing: 8) {
-                        TextEditor(text: $vm.reqSpecPrompt)
-                            .font(.body)
+                        KeywordHighlightingTextView(text: $vm.reqSpecPrompt,
+                                                    keywords: vm.promptReqSpecKeywords,
+                                                    fontSize: NSFont.systemFontSize)
                             .frame(minHeight: 80)
                             .padding(4)
                             .background(Color(.textBackgroundColor))
@@ -277,7 +267,23 @@ struct SettingsTabContent: View {
                                 RoundedRectangle(cornerRadius: 6)
                                     .stroke(Color(.separatorColor), lineWidth: 1)
                             )
-                            .help("The prompt being used")
+                        .help("The prompt being used")
+                        
+                        // Quick check (under the editor)
+                        let missing = vm.missingReqSpecKeywords(in: vm.reqSpecPrompt)
+                        if !missing.isEmpty {
+                            Text("Missing: " + missing.joined(separator: ", "))
+                                .font(.caption)
+                                .foregroundColor(.red)
+                        } else {
+                            HStack(spacing: 6) {
+                                Image(systemName: "checkmark.circle.fill").foregroundColor(.green)
+                                Text("All keywords present")
+                                    .font(.caption)
+                                    .foregroundColor(.green)
+                            }
+                        }
+                        
                         
                         HStack(spacing: 20) {
                             HStack {
@@ -318,7 +324,7 @@ struct SettingsTabContent: View {
                                   systemImage: "doc.text.fill",
                                   isExpanded: vm.isReqSpecSectionExpanded)
                 }
-                .disabled(true)
+
             }
             .padding(16)
         }

@@ -53,7 +53,7 @@ public struct HomeFolderContent: View {
 
         _selectedItemsUid        = State(initialValue: s.itemsFolderUid)
         _selectedBomsUid         = State(initialValue: s.bomFolderUid)
-        _selectedRequirementsUid = State(initialValue: s.requirementsFolderUid)
+        _selectedRequirementsUid = State(initialValue: s.reqSpecFolderUid)
 
         _savedItemsName       = State(initialValue: s.itemsFolderName)
         _savedItemsClassName  = State(initialValue: s.itemsFolderClassName)
@@ -63,9 +63,9 @@ public struct HomeFolderContent: View {
         _savedBomsClassName  = State(initialValue: s.bomFolderClassName)
         _savedBomsType       = State(initialValue: s.bomFolderType)
 
-        _savedRequirementsName      = State(initialValue: s.requirementsFolderName)
-        _savedRequirementsClassName = State(initialValue: s.requirementsFolderClassName)
-        _savedRequirementsType      = State(initialValue: s.requirementsFolderType)
+        _savedRequirementsName      = State(initialValue: s.reqSpecFolderName)
+        _savedRequirementsClassName = State(initialValue: s.reqSpecFolderClassName)
+        _savedRequirementsType      = State(initialValue: s.reqSpecFolderType)
     }
 
     // MARK: - View ----------------------------------------------------------
@@ -93,10 +93,10 @@ public struct HomeFolderContent: View {
             makeColumn(title: "Requirements", selection: $selectedRequirementsUid, savedName: savedRequirementsName) { newUid in
                 onSelect(newUid: newUid,
                          savedName: &savedRequirementsName, savedClassName: &savedRequirementsClassName, savedType: &savedRequirementsType,
-                         uidKeyPath: \.requirementsFolderUid,
-                         nameKeyPath: \.requirementsFolderName,
-                         classKeyPath: \.requirementsFolderClassName,
-                         typeKeyPath: \.requirementsFolderType)
+                         uidKeyPath: \.reqSpecFolderUid,
+                         nameKeyPath: \.reqSpecFolderName,
+                         classKeyPath: \.reqSpecFolderClassName,
+                         typeKeyPath: \.reqSpecFolderType)
             }
         }
         .padding()
@@ -172,7 +172,7 @@ public struct HomeFolderContent: View {
             selectedBomsUid = ""; savedBomsName = ""; savedBomsClassName = ""; savedBomsType = ""
         }
         if !folders.contains(where: { $0.id == selectedRequirementsUid }) {
-            s.requirementsFolderUid = ""; s.requirementsFolderName = ""; s.requirementsFolderClassName = ""; s.requirementsFolderType = ""
+            s.reqSpecFolderUid = ""; s.reqSpecFolderName = ""; s.reqSpecFolderClassName = ""; s.reqSpecFolderType = ""
             selectedRequirementsUid = ""; savedRequirementsName = ""; savedRequirementsClassName = ""; savedRequirementsType = ""
         }
     }

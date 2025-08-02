@@ -12,6 +12,7 @@ struct MainWindow: View {
     @State private var selectedTab = 0
     @StateObject private var itemsGeneratorVM = ItemsGeneratorViewModel()
     @StateObject private var bomGeneratorVM = BomGeneratorViewModel()
+    @StateObject private var reqSpecGeneratorVM = ReqSpecGeneratorViewModel()
     var body: some View {
         ElegantTabsView(selection: $selectedTab) {
             TabItem(title: "Items Generator", icon: .system(name: "batteryblock.stack"))
@@ -24,7 +25,7 @@ struct MainWindow: View {
             }
             TabItem(title: "Req Spec Generator", icon: .system(name: "text.document"))
             {
-                ReqSpecGeneratorContent()
+                ReqSpecGeneratorContent(vm: reqSpecGeneratorVM)
             }
             TabItem(title: "History", icon: .system(name: "clock"))
             {

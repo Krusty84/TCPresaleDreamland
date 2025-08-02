@@ -43,16 +43,17 @@ class SettingsManager {
     private let bomFolderTypeKey = "com.krusty84.settings.bomFolderType"
     private let bomListOfTypesKey = "com.krusty84.settings.bomListOfTypes"
     //
-    private let requirementFolderUidKey = "com.krusty84.settings.settings.requirementFolderUid"
-    private let requirementFolderNameKey = "com.krusty84.settings.requirementFolderName"
-    private let requirementFolderClassNameKey = "com.krusty84.settings.requirementFolderClassName"
-    private let requirementFolderTypeKey = "com.krusty84.settings.requirementFolderType"
-    
+    private let reqSpecFolderUidKey = "com.krusty84.settings.settings.reqSpecFolderUid"
+    private let reqSpecFolderNameKey = "com.krusty84.settings.reqSpecFolderName"
+    private let reqSpecFolderClassNameKey = "com.krusty84.settings.reqSpecFolderClassName"
+    private let reqSpecFolderTypeKey = "com.krusty84.settings.reqSpecFolderType"
+    private let reqSpecListOfTypesKey = "com.krusty84.settings.reqSpecListOfTypes"
     
     init() {
         // Load initial data from UserDefaults
         var arrayItemsType = defaults.stringArray(forKey: itemsListOfTypesKey) ?? []
         var arrayBomType = defaults.stringArray(forKey: bomListOfTypesKey) ?? []
+        var arrayReqSpecType = defaults.stringArray(forKey: reqSpecListOfTypesKey) ?? []
         
         // Ensure "Item" exists at index 0
         if !arrayItemsType.contains("Item") {
@@ -65,8 +66,14 @@ class SettingsManager {
             defaults.set(arrayBomType, forKey: itemsListOfTypesKey)
         }
         
+        if !arrayReqSpecType.contains("Item") {
+            arrayReqSpecType.insert("Item", at: 0)
+            defaults.set(arrayReqSpecType, forKey: reqSpecListOfTypesKey)
+        }
+        
         self.itemsListOfTypes_storage = arrayItemsType
         self.bomListOfTypes_storage = arrayBomType
+        self.reqSpecListOfTypes_storage = arrayReqSpecType
     }
     
     // Default prompts
@@ -97,6 +104,7 @@ class SettingsManager {
     Domain: {domainName}
     Count: {count}
     """
+    //
     let defaultItemsTemperature = 0.5
     let defaultItemsMaxTokens = 1000
     //
@@ -156,13 +164,70 @@ class SettingsManager {
     Product: {productName}
     Number of components: {depth}
     """
+    //
     let defaultBomTemperature = 0.5
     let defaultBomMaxTokens = 1000
-    
-    let defaultReqSpecPrompt = "Generate a requirements specification based on the product details."
+    //
+    let defaultReqSpecPrompt = """
+    You are an requirements engineeri en expert who writes Requirements Specfication into perfect JSON format.
+    EXAMPLE INPUT:
+    Product: Turbocharger
+    Number of requirements: 3
+    EXAMPLE JSON OUTPUT:
+    {
+        "product": {
+            "name": "Turbocharger",
+            "desc": "Boosts engine power via forced induction",
+            "items": [
+                {
+                    "name": "Compressor section",
+                    "desc": "Draws and compresses intake air",
+                    "items": [
+                        {
+                            "name": "Compressor wheel",
+                            "desc": "Rotating aluminium impeller",
+                            "items": []
+                        },
+                        {
+                            "name": "Compressor housing",
+                            "desc": "Cast shell guiding airflow",
+                            "items": []
+                        }
+                    ]
+                },
+                {
+                    "name": "Turbine section",
+                    "desc": "Uses exhaust gas energy",
+                    "items": [
+                        {
+                            "name": "Turbine wheel",
+                            "desc": "High-temp nickel alloy rotor",
+                            "items": []
+                        },
+                        {
+                            "name": "Turbine housing",
+                            "desc": "Ducts exhaust to wheel",
+                            "items": []
+                        }
+                    ]
+                }
+            ]
+        }
+    }
+    RULES:
+    1. Use only real engineering part names
+    2. Each desc is 3–10 simple, accurate words
+    3. Keep nesting until Depth is reached
+    4. Return exactly one JSON object—no extra text, no comments
+    ACTUAL TASK:
+    Create the Engineering BOM now for:
+    Product: {productName}
+    Number of requirements: {depth}
+    """
+    //
     let defaultReqSpecTemperature = 0.5
     let defaultReqSpecMaxTokens = 1000
-    
+    //
     var appLoggingEnabled: Bool {
         get { defaults.bool(forKey: appLoggingEnabledKey) }
         set { defaults.set(newValue, forKey: appLoggingEnabledKey) }
@@ -316,20 +381,33 @@ class SettingsManager {
         )
     }
     
-    var requirementsFolderUid: String {
-        get { defaults.string(forKey: requirementFolderUidKey) ?? "" }
-        set { defaults.set(newValue, forKey: requirementFolderUidKey) }
+    var reqSpecFolderUid: String {
+        get { defaults.string(forKey: reqSpecFolderUidKey) ?? "" }
+        set { defaults.set(newValue, forKey: reqSpecFolderUidKey) }
     }
-    var requirementsFolderName: String {
-        get { defaults.string(forKey: requirementFolderNameKey) ?? "" }
-        set { defaults.set(newValue, forKey: requirementFolderNameKey) }
+    var reqSpecFolderName: String {
+        get { defaults.string(forKey: reqSpecFolderNameKey) ?? "" }
+        set { defaults.set(newValue, forKey: reqSpecFolderNameKey) }
     }
-    var requirementsFolderClassName: String {
-        get { defaults.string(forKey: requirementFolderClassNameKey) ?? "" }
-        set { defaults.set(newValue, forKey: requirementFolderClassNameKey) }
+    var reqSpecFolderClassName: String {
+        get { defaults.string(forKey: reqSpecFolderClassNameKey) ?? "" }
+        set { defaults.set(newValue, forKey: reqSpecFolderClassNameKey) }
     }
-    var requirementsFolderType: String {
-        get { defaults.string(forKey: requirementFolderTypeKey) ?? "" }
-        set { defaults.set(newValue, forKey: requirementFolderTypeKey) }
+    var reqSpecFolderType: String {
+        get { defaults.string(forKey: reqSpecFolderTypeKey) ?? "" }
+        set { defaults.set(newValue, forKey: reqSpecFolderTypeKey) }
+    }
+    
+    @Published var reqSpecListOfTypes_storage: [String] {
+        didSet {
+            defaults.set(reqSpecListOfTypes_storage, forKey: reqSpecListOfTypesKey)
+        }
+    }
+    
+    var reqSpecListOfTypes: Binding<[String]> {
+        Binding<[String]>(
+            get:  { self.reqSpecListOfTypes_storage },
+            set:  { self.reqSpecListOfTypes_storage = $0 }
+        )
     }
 }
