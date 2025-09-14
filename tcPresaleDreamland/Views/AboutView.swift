@@ -23,7 +23,7 @@ struct AboutTabContent: View {
                 .fontWeight(.semibold)
 
             VStack(spacing: 4) {
-                Text("This tool is your helper for making data in Teamcenter fast. You do not need to invent good names anymore.\nItems, BOM's, Requirement specifications—things that normally take a lot of time—are now created in just a few clicks.")
+                Text("This tool is your helper for making data in Teamcenter fast. You do not need to invent good names anymore.\nItems, BOM's that normally take a lot of time—are now created in just a few clicks.")
                     .font(.body)
                     .multilineTextAlignment(.center)
             }

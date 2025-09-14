@@ -25,8 +25,8 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "3DA883CE2DDE5D3900C0C8CA"
-               BuildableName = "tcPresaleDreamland.app"
-               BlueprintName = "tcPresaleDreamland"
+               BuildableName = "TCPresaleDreamland.app"
+               BlueprintName = "TCPresaleDreamland"
                ReferencedContainer = "container:tcPresaleDreamland.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
@@ -54,8 +54,8 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "3DA883CE2DDE5D3900C0C8CA"
-            BuildableName = "tcPresaleDreamland.app"
-            BlueprintName = "tcPresaleDreamland"
+            BuildableName = "TCPresaleDreamland.app"
+            BlueprintName = "TCPresaleDreamland"
             ReferencedContainer = "container:tcPresaleDreamland.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
@@ -78,8 +78,8 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "3DA883CE2DDE5D3900C0C8CA"
-            BuildableName = "tcPresaleDreamland.app"
-            BlueprintName = "tcPresaleDreamland"
+            BuildableName = "TCPresaleDreamland.app"
+            BlueprintName = "TCPresaleDreamland"
             ReferencedContainer = "container:tcPresaleDreamland.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>

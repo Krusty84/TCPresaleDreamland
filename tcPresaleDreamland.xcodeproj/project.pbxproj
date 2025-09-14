@@ -12,22 +12,22 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		3DA883CF2DDE5D3900C0C8CA /* tcPresaleDreamland.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = tcPresaleDreamland.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		3DA883CF2DDE5D3900C0C8CA /* TCPresaleDreamland.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TCPresaleDreamland.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		3DE5C8CD2DF5F4E500E59D7C /* Exceptions for "tcPresaleDreamland" folder in "tcPresaleDreamland" target */ = {
+		3DE5C8CD2DF5F4E500E59D7C /* Exceptions for "tcPresaleDreamland" folder in "TCPresaleDreamland" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				PostActionsMustRead.txt,
 				Views/JsonTreeView/JSONTreeView.swift,
 			);
-			target = 3DA883CE2DDE5D3900C0C8CA /* tcPresaleDreamland */;
+			target = 3DA883CE2DDE5D3900C0C8CA /* TCPresaleDreamland */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
-		3DC847AF2DFD912100F3F8B7 /* Exceptions for "tcPresaleDreamland" folder in "Compile Sources" phase from "tcPresaleDreamland" target */ = {
+		3DC847AF2DFD912100F3F8B7 /* Exceptions for "tcPresaleDreamland" folder in "Compile Sources" phase from "TCPresaleDreamland" target */ = {
 			isa = PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet;
 			buildPhase = 3DA883CB2DDE5D3900C0C8CA /* Sources */;
 			membershipExceptions = (
@@ -40,8 +40,8 @@
 		3DA883D12DDE5D3900C0C8CA /* tcPresaleDreamland */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				3DE5C8CD2DF5F4E500E59D7C /* Exceptions for "tcPresaleDreamland" folder in "tcPresaleDreamland" target */,
-				3DC847AF2DFD912100F3F8B7 /* Exceptions for "tcPresaleDreamland" folder in "Compile Sources" phase from "tcPresaleDreamland" target */,
+				3DE5C8CD2DF5F4E500E59D7C /* Exceptions for "tcPresaleDreamland" folder in "TCPresaleDreamland" target */,
+				3DC847AF2DFD912100F3F8B7 /* Exceptions for "tcPresaleDreamland" folder in "Compile Sources" phase from "TCPresaleDreamland" target */,
 			);
 			path = tcPresaleDreamland;
 			sourceTree = "<group>";
@@ -72,7 +72,7 @@
 		3DA883D02DDE5D3900C0C8CA /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				3DA883CF2DDE5D3900C0C8CA /* tcPresaleDreamland.app */,
+				3DA883CF2DDE5D3900C0C8CA /* TCPresaleDreamland.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -80,9 +80,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		3DA883CE2DDE5D3900C0C8CA /* tcPresaleDreamland */ = {
+		3DA883CE2DDE5D3900C0C8CA /* TCPresaleDreamland */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 3DA883FC2DDE5D3A00C0C8CA /* Build configuration list for PBXNativeTarget "tcPresaleDreamland" */;
+			buildConfigurationList = 3DA883FC2DDE5D3A00C0C8CA /* Build configuration list for PBXNativeTarget "TCPresaleDreamland" */;
 			buildPhases = (
 				3DA883CB2DDE5D3900C0C8CA /* Sources */,
 				3DA883CC2DDE5D3900C0C8CA /* Frameworks */,
@@ -95,13 +95,13 @@
 			fileSystemSynchronizedGroups = (
 				3DA883D12DDE5D3900C0C8CA /* tcPresaleDreamland */,
 			);
-			name = tcPresaleDreamland;
+			name = TCPresaleDreamland;
 			packageProductDependencies = (
 				3DA8840E2DDE5D8500C0C8CA /* ElegantTabs */,
 				3DA884112DDE5DA300C0C8CA /* LoggerHelper */,
 			);
 			productName = tcPresaleDreamland;
-			productReference = 3DA883CF2DDE5D3900C0C8CA /* tcPresaleDreamland.app */;
+			productReference = 3DA883CF2DDE5D3900C0C8CA /* TCPresaleDreamland.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -137,7 +137,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				3DA883CE2DDE5D3900C0C8CA /* tcPresaleDreamland */,
+				3DA883CE2DDE5D3900C0C8CA /* TCPresaleDreamland */,
 			);
 		};
 /* End PBXProject section */
@@ -302,9 +302,11 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
+				DEVELOPMENT_TEAM = 7M7T9VZ52G;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = tcPresaleDreamland/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = TCPresaleDreamland;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.business";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -331,9 +333,11 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
+				DEVELOPMENT_TEAM = 7M7T9VZ52G;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = tcPresaleDreamland/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = TCPresaleDreamland;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.business";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -361,7 +365,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		3DA883FC2DDE5D3A00C0C8CA /* Build configuration list for PBXNativeTarget "tcPresaleDreamland" */ = {
+		3DA883FC2DDE5D3A00C0C8CA /* Build configuration list for PBXNativeTarget "TCPresaleDreamland" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				3DA883FD2DDE5D3A00C0C8CA /* Debug */,

@@ -23,10 +23,10 @@ struct MainWindow: View {
             {
                 BomGeneratorContent(vm: bomGeneratorVM)
             }
-            TabItem(title: "Req Spec Generator", icon: .system(name: "text.document"))
-            {
-                ReqSpecGeneratorContent(vm: reqSpecGeneratorVM)
-            }
+//            TabItem(title: "Req Spec Generator", icon: .system(name: "text.document"))
+//            {
+//                ReqSpecGeneratorContent(vm: reqSpecGeneratorVM)
+//            }
             TabItem(title: "History", icon: .system(name: "clock"))
             {
                 HistoryContent(vmItemsGeneratorViewModel: itemsGeneratorVM, vmBOMGeneratorViewModel: bomGeneratorVM)
