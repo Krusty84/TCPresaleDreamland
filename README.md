@@ -1,4 +1,4 @@
-# TCPresaleDreamland
+# TCPresaleDreamland [![Download on the Mac App Store](https://developer.apple.com/app-store/marketing/guidelines/images/badge-download-on-the-mac-app-store.svg)](https://apps.apple.com/us/app/tcpresaledreamland/id6752539188) 
 
 ## 🚀 What is this?
 
