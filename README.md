@@ -1,31 +1,31 @@
 # TCPresaleDreamland [![Download on the Mac App Store](https://developer.apple.com/app-store/marketing/guidelines/images/badge-download-on-the-mac-app-store.svg)](https://apps.apple.com/us/app/tcpresaledreamland/id6752539188) 
 
-## 🚀 What is this?
+## What is this?
 
 **TCPresaleDreamland** is your best friend when you need to impress stakeholders without showing the painful truth of real Teamcenter data.
 It's a lightweight, one-click demo data generator tailored for **Presales Engineers**, **Solution Architects**, and other demo warriors who don't have time for real integrations.
 
-> 🧙‍♂️ Create Items, BOM's, Requirement Specifications in seconds – no actual product knowledge required!
+> Create Items, BOM's, Requirement Specifications in seconds – no actual product knowledge required!
 
 --
 
-## 🎯 Features
+## Features
 
-* 🔧 Auto-generate **realistic-looking** Teamcenter objects
-* 🧱 Supports **Items**, **BOM's**, **Requirement Specifications**
+* Auto-generate **realistic-looking** Teamcenter objects
+* Supports **Items**, **BOM's**, **Requirement Specifications**
 
   > *"This is just sample data for illustration purposes only."* ;)
 
 --
 
-## 🧑‍💼 Who is it for?
+## Who is it for?
 
 * Presale folks who hear *"Can you show this use case?"* 3 minutes before the call
 * Consultants tired of building fake data by hand
 
 --
 
-## ⚠️ Disclaimer
+## Disclaimer
 
 * This tool generates **mock data only** and is not intended for use in production systems.
 * Any resemblance to real users, products, or workflows is purely coincidental (and lucky).
