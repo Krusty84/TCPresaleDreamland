@@ -33,7 +33,7 @@ It's a lightweight, one-click demo data generator tailored for **Presales Engine
 
 --
 
-## :pill: instructions below should be straightforward
+## Instructions below should be straightforward
 
 <img width="1005" alt="image" src="https://github.com/user-attachments/assets/3a1aca27-c1ed-4f81-a75d-9f84b6d67ae8" />
 
